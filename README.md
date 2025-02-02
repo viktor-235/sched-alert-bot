@@ -8,6 +8,9 @@
 - Java
 - Spring Boot
 - MongoDB
+- [jsoup](https://jsoup.org/) для парсинга web-страниц
+- [JaVers](https://javers.org/) для выявления изменений
+- [TelegramBots](https://github.com/rubenlagus/TelegramBots) для оповещения пользователей
 
 ## Конфигурация
 Настройки приложения находятся в файле `resources/application.properties` и `.env`.
