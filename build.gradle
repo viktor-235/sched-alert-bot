@@ -8,6 +8,10 @@ plugins {
 group = 'com.github.viktor235'
 version = gitVersion()
 
+bootJar {
+    archiveFileName = "app.jar"
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
