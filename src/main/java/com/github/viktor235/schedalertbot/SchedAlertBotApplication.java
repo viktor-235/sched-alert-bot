@@ -25,7 +25,4 @@ public class SchedAlertBotApplication {
         TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
         botsApi.registerBot(ctx.getBean("telegramService", TelegramLongPollingBot.class));
     }
-
 }
-
-
