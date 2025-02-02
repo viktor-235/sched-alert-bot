@@ -2,9 +2,10 @@ package com.github.viktor235.schedalertbot.site.stopgame;
 
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEvent;
 import com.github.viktor235.schedalertbot.utils.exception.AppException;
-import com.github.viktor235.schedalertbot.web.SelectorPageParser;
+import com.github.viktor235.schedalertbot.web.SelectorScraper;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.nodes.Element;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -21,42 +22,49 @@ import java.util.stream.Stream;
 
 @Component
 @RequiredArgsConstructor
-public class SgPageParser {
+public class SgScraper {
 
-    private final SelectorPageParser parser;
+    private final SelectorScraper scraper;
+
+    @Value("${site.stopgame.scraper.url}")
+    private String url;
+    @Value("${site.stopgame.scraper.selector.event}")
+    private String eventSelector;
+    @Value("${site.stopgame.scraper.selector.id}")
+    private String idSelector; //todo try xpath for attribute
+    @Value("${site.stopgame.scraper.selector.name}")
+    private String nameSelector;
+    @Value("${site.stopgame.scraper.selector.date}")
+    private String dateSelector;
+    @Value("${site.stopgame.scraper.selector.time}")
+    private String timeSelector;
+    @Value("${site.stopgame.scraper.selector.description}")
+    private String descriptionSelector;
+    @Value("${site.stopgame.scraper.selector.participants}")
+    private String participantsSelector;
+
     private final Locale ruLocale = Locale.forLanguageTag("ru-RU");
-    ZoneId zone = ZoneId.of("Europe/Moscow");
-    DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
+    private final ZoneId zone = ZoneId.of("Europe/Moscow");
+    private final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
             .appendPattern("d MMMM/HH.mm")
             .parseDefaulting(ChronoField.YEAR, LocalDateTime.now(zone).getYear())
             .toFormatter(ruLocale);
 
-    public static final String URL = "https://stopgame.ru/live_schedule";
-    public static final String EVENT_SELECTOR = "div[data-key]:has(div._stream_11xp0_102)";
-    private String idSelector = "[data-key]";//todo
-    private String nameSelector = "._stream-title_11xp0_1";
-    private String dateSelector = "._stream-info_11xp0_1 > div:nth-child(1) > span._stream-info__value_11xp0_1";
-    //    private String dayOfWeekSelector = "._stream-info_11xp0_1 > div:nth-child(1) > span._stream-info__subtitle_11xp0_1";
-    private String timeSelector = "._stream-info_11xp0_1 > div:nth-child(2) > span._stream-info__value_11xp0_1";
-    private String descriptionSelector = "._stream-description_11xp0_1";
-    private String participantsSelector = "._user-info__name_dhept_1165";
-    //todo move all url and selectors to db config for runtime control
-
     public List<SgEvent> parse() {
-        return Stream.of(parser.parsePage(URL, EVENT_SELECTOR))
+        return Stream.of(scraper.parsePage(url, eventSelector))
                 .flatMap(Collection::stream)
                 .map(this::parseStreamElement)
                 .toList();
     }
 
     private SgEvent parseStreamElement(Element el) {
-        boolean nowLive = "в эфире".equals(parser.getString(el, dateSelector).trim().toLowerCase(ruLocale));
+        boolean nowLive = "в эфире".equals(scraper.getString(el, dateSelector).trim().toLowerCase(ruLocale));
         return SgEvent.builder()
                 .id(extractId(el))
-                .name(parser.getString(el, nameSelector))
+                .name(scraper.getString(el, nameSelector))
                 .date(nowLive ? null : extractDate(el))
-                .description(parser.getString(el, descriptionSelector))
-                .participants(parser.getStrings(el, participantsSelector))
+                .description(scraper.getString(el, descriptionSelector))
+                .participants(scraper.getStrings(el, participantsSelector))
                 .nowLive(nowLive)
                 .build();
     }
@@ -76,7 +84,7 @@ public class SgPageParser {
      */
     private Instant extractDate(Element el) {
         LocalDateTime now = LocalDateTime.now(zone);
-        String dateTime = parser.getString(el, dateSelector) + "/" + parser.getString(el, timeSelector);
+        String dateTime = scraper.getString(el, dateSelector) + "/" + scraper.getString(el, timeSelector);
         LocalDateTime eventDate = LocalDateTime.parse(dateTime, dateTimeFormatter);
 
         // Calc correct year
@@ -88,7 +96,7 @@ public class SgPageParser {
     }
 
     private String extractId(Element el) {
-        return parser.getFirstElement(el, idSelector)
+        return scraper.getFirstElement(el, idSelector)
                 .orElseThrow(() -> new AppException("Unable to extract event id"))
                 .attr("data-key");
     }
