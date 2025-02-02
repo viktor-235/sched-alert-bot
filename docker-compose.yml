@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: sched-alert-bot-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - sched-alert-bot-mongodb-data:/data/db
+
+volumes:
+  sched-alert-bot-mongodb-data:
