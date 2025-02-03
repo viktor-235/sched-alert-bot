@@ -12,7 +12,7 @@ public class SgScheduler {
 
     private final SgProcessor processor;
 
-    @Scheduled(cron = "*/10 * * * * *")
+    @Scheduled(cron = "${site.stopgame.scheduler.cron}")
     public void performProcessing() {
         log.debug("Performing scheduled processing for Stopgame");
         processor.process();

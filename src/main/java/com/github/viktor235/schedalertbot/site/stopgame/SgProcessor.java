@@ -18,6 +18,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Processes <a href="https://stopgame.ru/live_schedule">stopgame.ru</a> schedule
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -25,7 +28,7 @@ public class SgProcessor {
 
     public static final String TEMPLATE_NAME = "stopgame.md.ftl";
 
-    private final SgPageParser pageParser;
+    private final SgScraper pageParser;
     private final SgEventRepository repo;
     private final CompareService compareService;
     private final TemplateService msgBuildingService;
@@ -34,6 +37,7 @@ public class SgProcessor {
     public void process() {
         List<TelegramUser> users = tgService.getUsers();//todo filter users who subscribed to this site
         if (users.isEmpty()) {
+            log.info("No users subscribed to Stopgame. Skipping processing");
             return;
         }
 

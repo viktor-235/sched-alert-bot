@@ -10,6 +10,7 @@
 - MongoDB
 - [jsoup](https://jsoup.org/) для парсинга web-страниц
 - [JaVers](https://javers.org/) для выявления изменений
+- [FreeMarker](https://freemarker.apache.org/) для генерации сообщений из шаблонов
 - [TelegramBots](https://github.com/rubenlagus/TelegramBots) для оповещения пользователей
 
 ## Конфигурация

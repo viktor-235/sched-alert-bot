@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 
 @Service
 @Slf4j
-public class SelectorPageParser {
+public class SelectorScraper {
 
     public Elements parsePage(String url, String selector) {
         try {
