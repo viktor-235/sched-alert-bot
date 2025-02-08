@@ -29,13 +29,20 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-    implementation group: 'io.mongock', name: 'mongock-springboot', version: '5.4.4'
-    implementation group: 'io.mongock', name: 'mongodb-springdata-v4-driver', version: '5.4.4'
     implementation group: 'org.jsoup', name: 'jsoup', version: '1.18.3'
     implementation group: 'org.javers', name: 'javers-core', version: '7.7.0'
     implementation 'org.freemarker:freemarker:2.3.32'
     implementation 'org.telegram:telegrambots-spring-boot-starter:6.9.7.1'
+
+    // MongoDB
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    implementation group: 'io.mongock', name: 'mongock-springboot', version: '5.4.4'
+    implementation group: 'io.mongock', name: 'mongodb-springdata-v4-driver', version: '5.4.4'
+
+    // Monitoring
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

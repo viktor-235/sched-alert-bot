@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'sched-alert-bot'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'sched-alert-bot-local-build:8080' ]

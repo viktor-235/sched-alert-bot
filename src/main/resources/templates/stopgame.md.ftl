@@ -6,12 +6,15 @@
 <#-- Functions -->
 
 <#function addText prefix field hideOldValue=false>
+    <#if !field.newValue?has_content && !field.oldValue?has_content>
+        <#return "" />
+    </#if>
     <#assign result = prefix />
     <#if field.changed && !newEvent>
-        <#if !field.oldValue?? || (field.oldValue?trim == "")>
-            <#assign result += "<пусто>" />
-        <#else>
+        <#if field.oldValue?? && field.oldValue?trim != "">
             <#assign result += hideOldValue?string("...", field.oldValue) />
+        <#else>
+            <#assign result += "<пусто>" />
         </#if>
         <#assign result += " → " />
         <#if !field.newValue?? || (field.newValue?trim == "")>
@@ -25,12 +28,17 @@
 </#function>
 
 <#function addDate prefix field>
-    <#if !field.newValue?? && !field.oldValue??>
+    <#if !field.newValue?has_content && !field.oldValue?has_content>
         <#return "" />
     </#if>
     <#assign result = prefix />
     <#if field.changed && !newEvent>
-        <#assign result += (field.oldValue?datetime.iso?string["dd MMMM, HH:mm"]! "<пусто>") +  " → " />
+        <#if field.oldValue??>
+            <#assign result += field.oldValue?datetime.iso?string["dd MMMM, HH:mm"] />
+        <#else>
+            <#assign result += "<пусто>" />
+        </#if>
+        <#assign result += " → " />
         <#if !field.newValue??>
             <#assign result += "<пусто>" />
         </#if>

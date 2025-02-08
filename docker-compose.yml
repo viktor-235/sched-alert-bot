@@ -1,6 +1,32 @@
 version: "3.8"
 
 services:
+  #  app:
+  #    image: ghcr.io/viktor-235/sched-alert-bot:latest
+  #    container_name: sched-alert-bot
+  #    ports:
+  #      - "8080:8080"
+  #    env_file: "./.env"
+  #    environment:
+  #      - MONGODB_URI=mongodb://mongo:27017/sched_alert_bot
+  #    depends_on:
+  #      - mongo
+  #      - prometheus
+
+  app-local-build:
+    container_name: sched-alert-bot-local-build
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    env_file: "./.env"
+    environment:
+      - MONGODB_URI=mongodb://sched-alert-bot-mongodb:27017/sched_alert_bot
+    depends_on:
+      - mongodb
+      - prometheus
+
   mongodb:
     image: mongo:6.0
     container_name: sched-alert-bot-mongodb
@@ -9,5 +35,29 @@ services:
     volumes:
       - sched-alert-bot-mongodb-data:/data/db
 
+  prometheus:
+    image: prom/prometheus
+    container_name: sched-alert-bot-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  #    depends_on:
+  #      - app
+  #      - app-local-build
+
+  grafana:
+    image: grafana/grafana
+    container_name: sched-alert-bot-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - sched-alert-bot-grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
 volumes:
   sched-alert-bot-mongodb-data:
+  sched-alert-bot-grafana-data:

@@ -3,7 +3,6 @@ package com.github.viktor235.schedalertbot.template;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -12,8 +11,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-@SpringBootTest
-@Import(TestFreeMarkerConfig.class)
+@SpringBootTest(classes = {TemplateService.class, TestFreeMarkerConfig.class})
 class TemplateServiceTest {
 
     @Autowired
