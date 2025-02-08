@@ -16,6 +16,14 @@ telegram:
 logging:
   level:
     com.github.viktor235.schedalertbot: DEBUG
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,scheduledtasks,prometheus"
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 site:
   stopgame:
