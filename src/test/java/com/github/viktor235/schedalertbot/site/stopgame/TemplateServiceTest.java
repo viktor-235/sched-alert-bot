@@ -1,6 +1,7 @@
 package com.github.viktor235.schedalertbot.site.stopgame;
 
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEvent;
+import com.github.viktor235.schedalertbot.template.FreeMarkerConfig;
 import com.github.viktor235.schedalertbot.template.TemplateField;
 import com.github.viktor235.schedalertbot.template.TemplateService;
 import org.junit.jupiter.api.Test;
@@ -16,8 +17,8 @@ import java.util.Map;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-@SpringBootTest
-class TemplateServiceTest {
+@SpringBootTest(classes = {TemplateService.class, FreeMarkerConfig.class})
+class StopgameTemplateServiceTest {
 
     @Autowired
     private TemplateService templateService;
@@ -44,6 +45,29 @@ class TemplateServiceTest {
                 📅 01 января, 03:00 → 02 января, 03:00 (MSK)
                 🧑‍🧒‍🧒 Streamer 1 → Streamer 1, Streamer 2
                 ℹ️ ... → New description
+                """);
+    }
+
+    @Test
+    void buildMsg_whenNewEventWithoutOptionalFields_thenBuildSmallMsg() {
+        String templateName = SgProcessor.TEMPLATE_NAME;
+        Map<String, Object> ctx = new HashMap<>();
+        ctx.put("nowLive", false);
+        ctx.put("newEvent", true);
+        ctx.put("fields", Map.of(
+                SgEvent.Fields.name, new TemplateField(SgEvent.Fields.name, true, null, "Name"),
+                SgEvent.Fields.nowLive, new TemplateField(SgEvent.Fields.nowLive, true, null, false),
+                SgEvent.Fields.description, new TemplateField(SgEvent.Fields.description, true, null, null),
+                SgEvent.Fields.date, new TemplateField(SgEvent.Fields.date, true, null, Instant.ofEpochSecond(0)),
+                SgEvent.Fields.participants, new TemplateField(SgEvent.Fields.participants, true, List.of(), List.of())
+        ));
+
+        String result = templateService.buildMsg(templateName, ctx);
+
+        assertThat(result).isEqualTo("""
+                🆕 Новое событие
+                🎦 Name
+                📅 01 января, 03:00 (MSK)
                 """);
     }
 
