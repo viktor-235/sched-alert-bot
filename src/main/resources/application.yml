@@ -25,7 +25,7 @@ site:
       url: https://stopgame.ru/live_schedule
       selector:
         event: div[data-key]:has(div._stream_11xp0_102)
-        id: \[data-key\]
+        id: "[data-key]"
         name: ._stream-title_11xp0_1
         date: ._stream-info_11xp0_1 > div:nth-child(1) > span._stream-info__value_11xp0_1
         time: ._stream-info_11xp0_1 > div:nth-child(2) > span._stream-info__value_11xp0_1
