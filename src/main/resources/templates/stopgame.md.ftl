@@ -69,7 +69,8 @@
 <#-- Template -->
 
 <#assign result = "" />
-<#if fields["nowLive"].newValue>
+<#assign nowLive = fields["nowLive"].newValue />
+<#if nowLive>
     <#assign result += "🔴 В эфире\n" />
 <#elseif newEvent>
     <#assign result += "🆕 Новое событие\n" />
@@ -77,7 +78,7 @@
     <#assign result += "🆙 Обновление события\n" />
 </#if>
 <#assign result += addText("🎦 ", fields["name"]) />
-<#assign result += addDate("📅 ", fields["date"]) />
+<#assign result += nowLive?string("", addDate("📅 ", fields["date"])) />
 <#assign result += addList("🧑‍🧒‍🧒 ", fields["participants"]) />
 <#assign result += addText("ℹ️ ", fields["description"], true) />
 ${result}
