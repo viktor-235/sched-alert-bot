@@ -27,7 +27,6 @@ class StopgameTemplateServiceTest {
     void buildMsg_whenChangedEventWithAllChanged_thenBuildUpdateMsg() {
         String templateName = SgProcessor.TEMPLATE_NAME;
         Map<String, Object> ctx = new HashMap<>();
-        ctx.put("nowLive", false);
         ctx.put("newEvent", false);
         ctx.put("fields", Map.of(
                 SgEvent.Fields.name, new TemplateField(SgEvent.Fields.name, true, "Old name", "New name"),
@@ -52,7 +51,6 @@ class StopgameTemplateServiceTest {
     void buildMsg_whenNewEventWithoutOptionalFields_thenBuildSmallMsg() {
         String templateName = SgProcessor.TEMPLATE_NAME;
         Map<String, Object> ctx = new HashMap<>();
-        ctx.put("nowLive", false);
         ctx.put("newEvent", true);
         ctx.put("fields", Map.of(
                 SgEvent.Fields.name, new TemplateField(SgEvent.Fields.name, true, null, "Name"),
@@ -75,7 +73,6 @@ class StopgameTemplateServiceTest {
     void buildMsg_whenChangedEventAndNewValuesAreEmpty_thenBuildUpdateMsg() {
         String templateName = SgProcessor.TEMPLATE_NAME;
         Map<String, Object> ctx = new HashMap<>();
-        ctx.put("nowLive", false);
         ctx.put("newEvent", false);
         ctx.put("fields", Map.of(
                 SgEvent.Fields.name, new TemplateField(SgEvent.Fields.name, true, "Old name", ""),
@@ -100,7 +97,6 @@ class StopgameTemplateServiceTest {
     void buildMsg_whenEventWithoutParticipants_thenBuildMsgWithoutParticipants() {
         String templateName = SgProcessor.TEMPLATE_NAME;
         Map<String, Object> ctx = new HashMap<>();
-        ctx.put("nowLive", false);
         ctx.put("newEvent", true);
         ctx.put("fields", Map.of(
                 SgEvent.Fields.name, new TemplateField(SgEvent.Fields.name, true, null, "Name"),
@@ -124,7 +120,6 @@ class StopgameTemplateServiceTest {
     void buildMsg_whenLiveEvent_thenBuildMsgWithoutDate() {
         String templateName = SgProcessor.TEMPLATE_NAME;
         Map<String, Object> ctx = new HashMap<>();
-        ctx.put("nowLive", true);
         ctx.put("newEvent", false);
         ctx.put("fields", Map.of(
                 SgEvent.Fields.name, new TemplateField(SgEvent.Fields.name, false, "Name", "Name"),
