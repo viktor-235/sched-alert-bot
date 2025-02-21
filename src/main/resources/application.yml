@@ -28,7 +28,7 @@ management:
 site:
   stopgame:
     scheduler:
-      cron: "0 */10 * * * *"
+      cron: "0 1/10 * * * *"
     scraper:
       url: https://stopgame.ru/live_schedule
       selector:
