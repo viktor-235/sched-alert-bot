@@ -1,8 +1,9 @@
 package com.github.viktor235.schedalertbot.site.stopgame.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -15,6 +16,8 @@ import java.util.List;
 @Builder
 @Document(collection = "site_stopgame_events")
 @FieldNameConstants
+@NoArgsConstructor
+@AllArgsConstructor
 public class SgEvent {
     //todo audit
     public static final String COLLECTION_NAME = "site_stopgame_events";
@@ -24,7 +27,6 @@ public class SgEvent {
     @Field
     private String name;
     @Field
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     private Instant date;
     @Field
     private String description;

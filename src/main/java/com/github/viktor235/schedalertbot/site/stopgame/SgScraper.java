@@ -6,7 +6,7 @@ import com.github.viktor235.schedalertbot.web.SelectorScraper;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
 
-@Component
+@Service
 @RequiredArgsConstructor
 public class SgScraper {
 
@@ -57,7 +57,7 @@ public class SgScraper {
                 .toList();
     }
 
-    private SgEvent parseStreamElement(Element el) {
+    SgEvent parseStreamElement(Element el) {
         boolean nowLive = "в эфире".equals(scraper.getString(el, dateSelector).trim().toLowerCase(ruLocale));
         return SgEvent.builder()
                 .id(extractId(el))
@@ -82,7 +82,7 @@ public class SgScraper {
      * @return the extracted date and time as an {@link Instant}
      * @throws DateTimeParseException if parsing fails
      */
-    private Instant extractDate(Element el) {
+    Instant extractDate(Element el) {
         LocalDateTime now = LocalDateTime.now(zone);
         String dateTime = scraper.getString(el, dateSelector) + "/" + scraper.getString(el, timeSelector);
         LocalDateTime eventDate = LocalDateTime.parse(dateTime, dateTimeFormatter);
@@ -95,7 +95,7 @@ public class SgScraper {
         return eventDate.atZone(zone).toInstant();
     }
 
-    private String extractId(Element el) {
+    String extractId(Element el) {
         return scraper.getFirstElement(el, idSelector)
                 .orElseThrow(() -> new AppException("Unable to extract event id"))
                 .attr("data-key");

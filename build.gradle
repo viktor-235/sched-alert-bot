@@ -29,6 +29,7 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
     implementation group: 'org.jsoup', name: 'jsoup', version: '1.18.3'
     implementation group: 'org.javers', name: 'javers-core', version: '7.7.0'
     implementation 'org.freemarker:freemarker:2.3.32'

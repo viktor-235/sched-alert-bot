@@ -6,6 +6,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.jsoup.select.Selector;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -18,12 +19,21 @@ import java.util.stream.Stream;
 @Slf4j
 public class SelectorScraper {
 
+    public Document parseDocument(String url) {
+        try {
+            return Jsoup.connect(url).get();
+        } catch (IOException e) {
+            throw new ScraperException("Error while accessing document '%s': %s".formatted(url, e.getMessage()), e);
+        }
+    }
+
     public Elements parsePage(String url, String selector) {
         try {
-            Document doc = Jsoup.connect(url).get();
+            Document doc = parseDocument(url);
             return doc.select(selector);
-        } catch (IOException e) {
-            throw new AppException("Error while parsing page '%s': %s".formatted(url, e.getMessage()), e);
+        } catch (Selector.SelectorParseException e) {
+            throw new AppException("Error while parsing page '%s' with selector '%s': %s"
+                    .formatted(url, selector, e.getMessage()), e);
         }
     }
 
