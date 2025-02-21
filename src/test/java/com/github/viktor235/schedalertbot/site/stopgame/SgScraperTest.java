@@ -45,7 +45,7 @@ class SgScraperTest {
 
         assertNotNull(events);
         assertEquals(expectedEvents.size(), events.size());
-        assertIterableEquals(expectedEvents, events);
+        assertIterableEquals(expectedEvents, events, () -> "Expected:\n" + expectedEvents + ", but was:\n" + events);
     }
 
     private List<SgEvent> readJsonFile(String jsonFilePath) throws IOException {
