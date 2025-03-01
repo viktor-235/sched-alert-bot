@@ -1,8 +1,7 @@
 package com.github.viktor235.schedalertbot.site.stopgame;
 
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEvent;
-import com.github.viktor235.schedalertbot.utils.exception.AppException;
-import com.github.viktor235.schedalertbot.web.SelectorScraper;
+import com.github.viktor235.schedalertbot.web.XpathScraper;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +23,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class SgScraper {
 
-    private final SelectorScraper scraper;
+    private final XpathScraper scraper;
 
     @Value("${site.stopgame.scraper.url}")
     private String url;
@@ -60,7 +59,7 @@ public class SgScraper {
     SgEvent parseStreamElement(Element el) {
         boolean nowLive = "в эфире".equals(scraper.getString(el, dateSelector).trim().toLowerCase(ruLocale));
         return SgEvent.builder()
-                .id(extractId(el))
+                .id(scraper.getString(el, idSelector)) //TODO check required fields
                 .name(scraper.getString(el, nameSelector))
                 .date(nowLive ? null : extractDate(el))
                 .description(scraper.getString(el, descriptionSelector))
@@ -93,11 +92,5 @@ public class SgScraper {
             eventDate = eventDate.plusYears(1);
         }
         return eventDate.atZone(zone).toInstant();
-    }
-
-    String extractId(Element el) {
-        return scraper.getFirstElement(el, idSelector)
-                .orElseThrow(() -> new AppException("Unable to extract event id"))
-                .attr("data-key");
     }
 }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.viktor235.schedalertbot.config.JacksonConfig;
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEvent;
-import com.github.viktor235.schedalertbot.web.SelectorScraper;
+import com.github.viktor235.schedalertbot.web.XpathScraper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.jsoup.Jsoup;
@@ -24,11 +24,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
-@SpringBootTest(classes = {SgScraper.class, SelectorScraper.class, JacksonConfig.class})
+@SpringBootTest(classes = {SgScraper.class, XpathScraper.class, JacksonConfig.class})
 class SgScraperTest {
 
     @SpyBean
-    private SelectorScraper scraper;
+    private XpathScraper scraper;
     @Autowired
     private SgScraper sgScraper;
     @Autowired
