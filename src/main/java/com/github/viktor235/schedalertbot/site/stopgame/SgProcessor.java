@@ -112,6 +112,9 @@ public class SgProcessor {
     private EventSnapshot sendTgMsg(EventSnapshot event) {
         for (TelegramUser usr : tgService.getUsers()) {//TODO reuse prev users
             tgService.sendMessage(usr.getId(), event.message);
+            if (usr.getChannelId() != null) {
+                tgService.sendMessage(usr.getChannelId(), event.message);
+            }
         }
         return event;
     }

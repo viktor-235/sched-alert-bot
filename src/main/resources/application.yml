@@ -28,14 +28,14 @@ management:
 site:
   stopgame:
     scheduler:
-      cron: "0 */10 * * * *"
+      cron: "0 1/10 * * * *"
     scraper:
       url: https://stopgame.ru/live_schedule
       selector:
-        event: div[data-key]:has(div._stream_11xp0_102)
-        id: "[data-key]"
-        name: ._stream-title_11xp0_1
-        date: ._stream-info_11xp0_1 > div:nth-child(1) > span._stream-info__value_11xp0_1
-        time: ._stream-info_11xp0_1 > div:nth-child(2) > span._stream-info__value_11xp0_1
-        description: ._stream-description_11xp0_1
-        participants: ._user-info__name_dhept_1165
+        event: "//div[@data-key and .//div[contains(@class, '_stream_')]]"
+        id: "./@data-key"
+        name: ".//*[contains(@class, '_stream-title_')]"
+        date: ".//*[contains(@class, '_stream-info_')]/*[1]//*[contains(@class, '_stream-info__value_')]"
+        time: ".//*[contains(@class, '_stream-info_')]/*[2]//*[contains(@class, '_stream-info__value_')]"
+        description: ".//*[contains(@class, '_stream-description_')]"
+        participants: ".//*[contains(@class, '_user-info__name_')]"

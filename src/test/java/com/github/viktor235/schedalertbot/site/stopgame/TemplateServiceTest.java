@@ -132,7 +132,7 @@ class StopgameTemplateServiceTest {
         String result = templateService.buildMsg(templateName, ctx);
 
         assertThat(result).isEqualTo("""
-                🔴 В эфире
+                🔴 В эфире [Twitch](https://www.twitch.tv/stopgameru)/[YouTube](https://www.youtube.com/@StopgameRuOnline)
                 🎦 Name
                 ℹ️ Description
                 """);
