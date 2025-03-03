@@ -90,7 +90,8 @@ public class SgProcessor {
                 SgEvent.Fields.nowLive, genTemplField(SgEvent.Fields.nowLive, changesMap, event.web.isNowLive()),
                 SgEvent.Fields.date, genTemplField(SgEvent.Fields.date, changesMap, event.web.getDate()),
                 SgEvent.Fields.participants, genTemplField(SgEvent.Fields.participants, changesMap, event.web.getParticipants()),
-                SgEvent.Fields.description, genTemplField(SgEvent.Fields.description, changesMap, event.web.getDescription())
+                SgEvent.Fields.description, genTemplField(SgEvent.Fields.description, changesMap, event.web.getDescription()),
+                SgEvent.Fields.imageUrl, genTemplField(SgEvent.Fields.imageUrl, changesMap, event.web.getImageUrl())
         ));
 
         return event.withMessage(

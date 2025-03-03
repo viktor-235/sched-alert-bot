@@ -39,3 +39,4 @@ site:
         time: ".//*[contains(@class, '_stream-info_')]/*[2]//*[contains(@class, '_stream-info__value_')]"
         description: ".//*[contains(@class, '_stream-description_')]"
         participants: ".//*[contains(@class, '_user-info__name_')]"
+        imageUrl: ".//*[contains(@class, '_stream-poster_')]/@src"

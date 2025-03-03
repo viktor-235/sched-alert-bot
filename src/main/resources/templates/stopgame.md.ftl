@@ -66,6 +66,19 @@
     <#return result + "\n" />
 </#function>
 
+<#function addPoster prefix field>
+    <#if !field.newValue?has_content && !field.oldValue?has_content>
+        <#return "" />
+    </#if>
+    <#if field.changed && !newEvent>
+        <#assign result += prefix + "Новый постер" />
+    </#if>
+    <#if field.newValue?? && (field.newValue?has_content)>
+        <#assign result += "[‍](" + field.newValue + ")" />
+    </#if>
+    <#return result />
+</#function>
+
 <#-- Template -->
 
 <#assign result = "" />
@@ -81,4 +94,5 @@
 <#assign result += nowLive?string("", addDate("📅 ", fields["date"])) />
 <#assign result += addList("🧑‍🧒‍🧒 ", fields["participants"]) />
 <#assign result += addText("ℹ️ ", fields["description"], true) />
+<#assign result += addPoster("🖼️ ", fields["imageUrl"]) />
 ${result}
