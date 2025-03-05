@@ -73,9 +73,6 @@
     <#if field.changed && !newEvent>
         <#assign result += prefix + "Новый постер" />
     </#if>
-    <#if field.newValue?? && (field.newValue?has_content)>
-        <#assign result += "[‍](" + field.newValue + ")" />
-    </#if>
     <#return result />
 </#function>
 
