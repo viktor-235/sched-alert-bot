@@ -116,7 +116,7 @@ public class TelegramService extends TelegramLongPollingBot {
         if (userRepository.existsById(ctx.userId)) {
             userRepository.deleteById(ctx.userId);
             log.info("User unregistered: {}", ctx.userId);
-            sendMessage(ctx.userId, "You have been successfully unsubscribed from the bot. Use `/start` command to subscribe again.");
+            sendMessage(ctx.userId, "You have been successfully unsubscribed from the bot. Use /start command to subscribe again.");
         } else {
             sendMessage(ctx.userId, "You are not registered. Use /start command to register.");
         }
