@@ -4,6 +4,7 @@ import com.github.viktor235.schedalertbot.compare.CompareService;
 import com.github.viktor235.schedalertbot.compare.FieldDiff;
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEvent;
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventRepository;
+import com.github.viktor235.schedalertbot.site.stopgame.model.SgMapper;
 import com.github.viktor235.schedalertbot.telegram.TelegramService;
 import com.github.viktor235.schedalertbot.telegram.TelegramUser;
 import com.github.viktor235.schedalertbot.template.TemplateField;
@@ -33,6 +34,7 @@ public class SgProcessor {
     private final CompareService compareService;
     private final TemplateService msgBuildingService;
     private final TelegramService tgService;
+    private final SgMapper mapper;
 
     public void process() {
         List<TelegramUser> users = tgService.getUsers();//todo filter users who subscribed to this site
@@ -121,7 +123,12 @@ public class SgProcessor {
     }
 
     private EventSnapshot saveChanges(EventSnapshot event) {
-        repo.save(event.web);
+        if (event.db != null) {
+            mapper.updateFromWeb(event.web, event.db);
+            repo.save(event.db);
+        } else {
+            repo.save(event.web);
+        }
         return event;
     }
 
