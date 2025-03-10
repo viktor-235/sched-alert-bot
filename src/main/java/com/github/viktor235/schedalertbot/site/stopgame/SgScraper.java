@@ -41,6 +41,8 @@ public class SgScraper {
     private String descriptionSelector;
     @Value("${site.stopgame.scraper.selector.participants}")
     private String participantsSelector;
+    @Value("${site.stopgame.scraper.selector.imageUrl}")
+    private String imageUrlSelector;
 
     private final Locale ruLocale = Locale.forLanguageTag("ru-RU");
     private final ZoneId zone = ZoneId.of("Europe/Moscow");
@@ -65,6 +67,7 @@ public class SgScraper {
                 .description(scraper.getString(el, descriptionSelector))
                 .participants(scraper.getStrings(el, participantsSelector))
                 .nowLive(nowLive)
+                .imageUrl(scraper.getString(el, imageUrlSelector))
                 .build();
     }
 

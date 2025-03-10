@@ -30,7 +30,7 @@ public class XpathScraper {
             Document doc = parseDocument(url);
             return doc.selectXpath(xpath);
         } catch (Exception e) {
-            throw new AppException("Error while parsing page '%s' with XPath '%s': %s"
+            throw new ScraperException("Error while parsing page '%s' with XPath '%s': %s"
                     .formatted(url, xpath, e.getMessage()), e);
         }
     }
