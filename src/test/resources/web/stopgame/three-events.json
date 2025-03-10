@@ -8,7 +8,8 @@
       "Ян Грибович",
       "Иван Лоев"
     ],
-    "nowLive": false
+    "nowLive": false,
+    "imageUrl": "https://images.stopgame.ru/streams/2025/02/20/c583x325/vG7OuFmDyRuIUXavLuGHwg/obRQj201m.jpg"
   },
   {
     "id": 1452,
@@ -19,7 +20,8 @@
       "Андрей Маковеев",
       "Дмитрий Карнов"
     ],
-    "nowLive": false
+    "nowLive": false,
+    "imageUrl": "https://images.stopgame.ru/streams/2025/02/21/c583x325/ZJhwaAhQg6anG_qH2OK7Kg/VBcL5AlA.jpg"
   },
   {
     "id": 1449,
@@ -27,6 +29,7 @@
     "date": "2025-02-23T12:00:00Z",
     "description": "",
     "participants": [],
-    "nowLive": false
+    "nowLive": false,
+    "imageUrl": "https://images.stopgame.ru/streams/2025/02/18/c583x325/iLjc1oLWxpB-C45oI6fcAA/84eYyeu.jpg"
   }
 ]

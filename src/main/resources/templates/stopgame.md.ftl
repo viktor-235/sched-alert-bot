@@ -70,8 +70,9 @@
     <#if !field.newValue?has_content && !field.oldValue?has_content>
         <#return "" />
     </#if>
+    <#assign result = "" />
     <#if field.changed && !newEvent>
-        <#assign result += prefix + "Новый постер" />
+        <#assign result += prefix + "Новый постер\n" />
     </#if>
     <#return result />
 </#function>
