@@ -159,7 +159,6 @@ public class TelegramService extends TelegramLongPollingBot {
 
     public void sendMessage(String chatId, String message) {
         SendMessage sendMessage = new SendMessage();
-        sendMessage.setParseMode("Markdown");
         sendMessage.setChatId(chatId);
         sendMessage.setText(message);
 
@@ -181,7 +180,6 @@ public class TelegramService extends TelegramLongPollingBot {
         sendPhoto.setPhoto(new InputFile(imageUrl));
         if (isNotEmpty(caption)) {
             sendPhoto.setCaption(caption);
-            sendPhoto.setParseMode("Markdown");
         }
 
         try {
