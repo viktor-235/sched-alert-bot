@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.FieldNameConstants;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -16,15 +15,14 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import java.time.Instant;
 import java.util.List;
 
-import static com.github.viktor235.schedalertbot.site.stopgame.model.SgEvent.COLLECTION_NAME;
+import static com.github.viktor235.schedalertbot.site.stopgame.model.SgEventEntry.COLLECTION_NAME;
 
 @Data
 @Builder
 @Document(collection = COLLECTION_NAME)
-@FieldNameConstants
 @NoArgsConstructor
 @AllArgsConstructor
-public class SgEvent {
+public class SgEventEntry {
 
     public static final String COLLECTION_NAME = "site_stopgame_events";
 

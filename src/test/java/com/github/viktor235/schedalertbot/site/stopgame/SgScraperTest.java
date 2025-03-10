@@ -3,7 +3,7 @@ package com.github.viktor235.schedalertbot.site.stopgame;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.viktor235.schedalertbot.config.JacksonConfig;
-import com.github.viktor235.schedalertbot.site.stopgame.model.SgEvent;
+import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventWeb;
 import com.github.viktor235.schedalertbot.web.XpathScraper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -39,16 +39,16 @@ class SgScraperTest {
     void parse_whenValidElements_thenReturnsListOfEvents(InputSource inputSource) throws IOException {
         Document doc = Jsoup.parse(Path.of(inputSource.getActualHtmlPath()).toFile(), "UTF-8");
         doReturn(doc).when(scraper).parseDocument(any());
-        List<SgEvent> expectedEvents = readJsonFile(inputSource.getExpectedJsonPath());
+        List<SgEventWeb> expectedEvents = readJsonFile(inputSource.getExpectedJsonPath());
 
-        List<SgEvent> events = sgScraper.parse();
+        List<SgEventWeb> events = sgScraper.parse();
 
         assertNotNull(events);
         assertEquals(expectedEvents.size(), events.size());
         assertIterableEquals(expectedEvents, events, () -> "Expected:\n" + expectedEvents + ", but was:\n" + events);
     }
 
-    private List<SgEvent> readJsonFile(String jsonFilePath) throws IOException {
+    private List<SgEventWeb> readJsonFile(String jsonFilePath) throws IOException {
         return mapper.readValue(
                 Files.readString(Path.of(jsonFilePath)),
                 new TypeReference<>() {

@@ -18,6 +18,13 @@ java {
     }
 }
 
+compileJava {
+    options.compilerArgs += [
+            '-Amapstruct.unmappedSourcePolicy=ERROR',
+            '-Amapstruct.unmappedTargetPolicy=ERROR'
+    ]
+}
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor

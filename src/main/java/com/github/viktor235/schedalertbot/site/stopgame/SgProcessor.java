@@ -2,8 +2,9 @@ package com.github.viktor235.schedalertbot.site.stopgame;
 
 import com.github.viktor235.schedalertbot.compare.CompareService;
 import com.github.viktor235.schedalertbot.compare.FieldDiff;
-import com.github.viktor235.schedalertbot.site.stopgame.model.SgEvent;
+import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventEntry;
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventRepository;
+import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventWeb;
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgMapper;
 import com.github.viktor235.schedalertbot.telegram.TelegramService;
 import com.github.viktor235.schedalertbot.telegram.TelegramUser;
@@ -44,7 +45,7 @@ public class SgProcessor {
         }
 
         // Scheduled
-        List<SgEvent> events = pageParser.parse();
+        List<SgEventWeb> events = pageParser.parse();
         log.info("Found {} streams", events.size());
         events.stream()
                 .map(this::getDbVersion)
@@ -56,16 +57,16 @@ public class SgProcessor {
                 .forEach(this::saveChanges);
     }
 
-    private EventSnapshot getDbVersion(SgEvent webEvent) {
+    private EventSnapshot getDbVersion(SgEventWeb webEvent) {
         log.debug("Retrieving db data for {}", webEvent);
-        SgEvent dbEvent = repo.findById(webEvent.getId())
+        SgEventEntry dbEvent = repo.findById(webEvent.getId())
                 .orElse(null);
         return EventSnapshot.init(dbEvent, webEvent);
     }
 
     private EventSnapshot compare(EventSnapshot event) {
-        SgEvent db = event.db;
-        SgEvent web = event.web;
+        SgEventWeb db = mapper.toWeb(event.db);
+        SgEventWeb web = event.web;
         log.debug("Comparing db and web records:\n{}\n{}", db, web);
         List<FieldDiff> fieldDiffs = compareService.compare(db, web);
         return event.withDiffReport(!fieldDiffs.isEmpty(), fieldDiffs);
@@ -88,12 +89,12 @@ public class SgProcessor {
 
         ctx.put("newEvent", event.db == null);
         ctx.put("fields", Map.of(
-                SgEvent.Fields.name, genTemplField(SgEvent.Fields.name, changesMap, event.web.getName()),
-                SgEvent.Fields.nowLive, genTemplField(SgEvent.Fields.nowLive, changesMap, event.web.isNowLive()),
-                SgEvent.Fields.date, genTemplField(SgEvent.Fields.date, changesMap, event.web.getDate()),
-                SgEvent.Fields.participants, genTemplField(SgEvent.Fields.participants, changesMap, event.web.getParticipants()),
-                SgEvent.Fields.description, genTemplField(SgEvent.Fields.description, changesMap, event.web.getDescription()),
-                SgEvent.Fields.imageUrl, genTemplField(SgEvent.Fields.imageUrl, changesMap, event.web.getImageUrl())
+                SgEventWeb.Fields.name, genTemplField(SgEventWeb.Fields.name, changesMap, event.web.getName()),
+                SgEventWeb.Fields.nowLive, genTemplField(SgEventWeb.Fields.nowLive, changesMap, event.web.isNowLive()),
+                SgEventWeb.Fields.date, genTemplField(SgEventWeb.Fields.date, changesMap, event.web.getDate()),
+                SgEventWeb.Fields.participants, genTemplField(SgEventWeb.Fields.participants, changesMap, event.web.getParticipants()),
+                SgEventWeb.Fields.description, genTemplField(SgEventWeb.Fields.description, changesMap, event.web.getDescription()),
+                SgEventWeb.Fields.imageUrl, genTemplField(SgEventWeb.Fields.imageUrl, changesMap, event.web.getImageUrl())
         ));
 
         return event.withMessage(
@@ -127,18 +128,20 @@ public class SgProcessor {
             mapper.updateFromWeb(event.web, event.db);
             repo.save(event.db);
         } else {
-            repo.save(event.web);
+            repo.save(
+                    mapper.toEntry(event.web)
+            );
         }
         return event;
     }
 
-    public record EventSnapshot(SgEvent db,
-                                SgEvent web,
+    public record EventSnapshot(SgEventEntry db,
+                                SgEventWeb web,
                                 boolean changed,
                                 List<FieldDiff> fieldDiffs,
                                 String message) {
 
-        public static EventSnapshot init(SgEvent db, SgEvent web) {
+        public static EventSnapshot init(SgEventEntry db, SgEventWeb web) {
             return new EventSnapshot(db, web, true, null, null);
         }
 
