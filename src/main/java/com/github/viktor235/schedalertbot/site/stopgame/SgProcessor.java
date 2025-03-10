@@ -44,13 +44,11 @@ public class SgProcessor {
             return;
         }
 
-        // Scheduled
         List<SgEventWeb> events = pageParser.parse();
         log.info("Found {} streams", events.size());
         events.stream()
                 .map(this::getDbVersion)
                 .map(this::compare)
-                .map(this::debugComparison)
                 .filter(EventSnapshot::changed) //todo check isInFuture
                 .map(this::generateMsg)
                 .map(this::sendTgMsg)
@@ -69,12 +67,9 @@ public class SgProcessor {
         SgEventWeb web = event.web;
         log.debug("Comparing db and web records:\n{}\n{}", db, web);
         List<FieldDiff> fieldDiffs = compareService.compare(db, web);
-        return event.withDiffReport(!fieldDiffs.isEmpty(), fieldDiffs);
-    }
-
-    private EventSnapshot debugComparison(EventSnapshot data) {
-        log.info("Comparison result (changed={}): {}", data.changed, data);
-        return data;
+        EventSnapshot newEvent = event.withDiffReport(!fieldDiffs.isEmpty(), fieldDiffs);
+        log.info("Comparison result (changed={}): {}", newEvent.changed, newEvent);
+        return newEvent;
     }
 
     private EventSnapshot generateMsg(EventSnapshot event) {
