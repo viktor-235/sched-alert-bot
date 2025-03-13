@@ -1,6 +1,6 @@
 package com.github.viktor235.schedalertbot.site.stopgame;
 
-import com.github.viktor235.schedalertbot.site.stopgame.model.SgEvent;
+import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventWeb;
 import com.github.viktor235.schedalertbot.web.XpathScraper;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.nodes.Element;
@@ -41,6 +41,8 @@ public class SgScraper {
     private String descriptionSelector;
     @Value("${site.stopgame.scraper.selector.participants}")
     private String participantsSelector;
+    @Value("${site.stopgame.scraper.selector.imageUrl}")
+    private String imageUrlSelector;
 
     private final Locale ruLocale = Locale.forLanguageTag("ru-RU");
     private final ZoneId zone = ZoneId.of("Europe/Moscow");
@@ -49,22 +51,23 @@ public class SgScraper {
             .parseDefaulting(ChronoField.YEAR, LocalDateTime.now(zone).getYear())
             .toFormatter(ruLocale);
 
-    public List<SgEvent> parse() {
+    public List<SgEventWeb> parse() {
         return Stream.of(scraper.parsePage(url, eventSelector))
                 .flatMap(Collection::stream)
                 .map(this::parseStreamElement)
                 .toList();
     }
 
-    SgEvent parseStreamElement(Element el) {
+    SgEventWeb parseStreamElement(Element el) {
         boolean nowLive = "в эфире".equals(scraper.getString(el, dateSelector).trim().toLowerCase(ruLocale));
-        return SgEvent.builder()
+        return SgEventWeb.builder()
                 .id(scraper.getString(el, idSelector)) //TODO check required fields
                 .name(scraper.getString(el, nameSelector))
                 .date(nowLive ? null : extractDate(el))
                 .description(scraper.getString(el, descriptionSelector))
                 .participants(scraper.getStrings(el, participantsSelector))
                 .nowLive(nowLive)
+                .imageUrl(scraper.getString(el, imageUrlSelector))
                 .build();
     }
 

@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
@@ -19,6 +21,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+
+import static org.apache.commons.lang3.ObjectUtils.isEmpty;
+import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 
 @Service
 @RequiredArgsConstructor
@@ -154,14 +159,33 @@ public class TelegramService extends TelegramLongPollingBot {
 
     public void sendMessage(String chatId, String message) {
         SendMessage sendMessage = new SendMessage();
-        sendMessage.setParseMode("Markdown");
         sendMessage.setChatId(chatId);
         sendMessage.setText(message);
 
         try {
             execute(sendMessage);
         } catch (TelegramApiException e) {
-            log.error(e.getMessage(), e);
+            log.error("Error sending message: {}", e.getMessage(), e);
+        }
+    }
+
+    public void sendPhotoMessage(String chatId, String imageUrl, String caption) {
+        if (isEmpty(imageUrl)) {
+            sendMessage(chatId, caption);
+            return;
+        }
+
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(chatId);
+        sendPhoto.setPhoto(new InputFile(imageUrl));
+        if (isNotEmpty(caption)) {
+            sendPhoto.setCaption(caption);
+        }
+
+        try {
+            execute(sendPhoto);
+        } catch (TelegramApiException e) {
+            log.error("Error sending photo message: {}", e.getMessage(), e);
         }
     }
 

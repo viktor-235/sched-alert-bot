@@ -1,6 +1,6 @@
 package com.github.viktor235.schedalertbot.site.stopgame;
 
-import com.github.viktor235.schedalertbot.site.stopgame.model.SgEvent;
+import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventWeb;
 import com.github.viktor235.schedalertbot.template.FreeMarkerConfig;
 import com.github.viktor235.schedalertbot.template.TemplateField;
 import com.github.viktor235.schedalertbot.template.TemplateService;
@@ -18,7 +18,7 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SpringBootTest(classes = {TemplateService.class, FreeMarkerConfig.class})
-class StopgameTemplateServiceTest {
+class SgTemplateServiceTest {
 
     @Autowired
     private TemplateService templateService;
@@ -29,11 +29,12 @@ class StopgameTemplateServiceTest {
         Map<String, Object> ctx = new HashMap<>();
         ctx.put("newEvent", false);
         ctx.put("fields", Map.of(
-                SgEvent.Fields.name, new TemplateField(SgEvent.Fields.name, true, "Old name", "New name"),
-                SgEvent.Fields.nowLive, new TemplateField(SgEvent.Fields.nowLive, true, false, false),
-                SgEvent.Fields.description, new TemplateField(SgEvent.Fields.description, true, "Old description", "New description"),
-                SgEvent.Fields.date, new TemplateField(SgEvent.Fields.date, true, Instant.ofEpochSecond(0), Instant.ofEpochSecond(0).plus(1, ChronoUnit.DAYS)),
-                SgEvent.Fields.participants, new TemplateField(SgEvent.Fields.participants, true, List.of("Streamer 1"), List.of("Streamer 1", "Streamer 2"))
+                SgEventWeb.Fields.name, new TemplateField(SgEventWeb.Fields.name, true, "Old name", "New name"),
+                SgEventWeb.Fields.nowLive, new TemplateField(SgEventWeb.Fields.nowLive, true, false, false),
+                SgEventWeb.Fields.description, new TemplateField(SgEventWeb.Fields.description, true, "Old description", "New description"),
+                SgEventWeb.Fields.date, new TemplateField(SgEventWeb.Fields.date, true, Instant.ofEpochSecond(0), Instant.ofEpochSecond(0).plus(1, ChronoUnit.DAYS)),
+                SgEventWeb.Fields.participants, new TemplateField(SgEventWeb.Fields.participants, true, List.of("Streamer 1"), List.of("Streamer 1", "Streamer 2")),
+                SgEventWeb.Fields.imageUrl, new TemplateField(SgEventWeb.Fields.imageUrl, true, "https://example.com/1.jpg", "https://example.com/2.jpg")
         ));
 
         String result = templateService.buildMsg(templateName, ctx);
@@ -44,6 +45,7 @@ class StopgameTemplateServiceTest {
                 📅 01 января, 03:00 → 02 января, 03:00 (MSK)
                 🧑‍🧒‍🧒 Streamer 1 → Streamer 1, Streamer 2
                 ℹ️ ... → New description
+                🖼️ Новый постер
                 """);
     }
 
@@ -53,11 +55,12 @@ class StopgameTemplateServiceTest {
         Map<String, Object> ctx = new HashMap<>();
         ctx.put("newEvent", true);
         ctx.put("fields", Map.of(
-                SgEvent.Fields.name, new TemplateField(SgEvent.Fields.name, true, null, "Name"),
-                SgEvent.Fields.nowLive, new TemplateField(SgEvent.Fields.nowLive, true, null, false),
-                SgEvent.Fields.description, new TemplateField(SgEvent.Fields.description, true, null, null),
-                SgEvent.Fields.date, new TemplateField(SgEvent.Fields.date, true, null, Instant.ofEpochSecond(0)),
-                SgEvent.Fields.participants, new TemplateField(SgEvent.Fields.participants, true, List.of(), List.of())
+                SgEventWeb.Fields.name, new TemplateField(SgEventWeb.Fields.name, true, null, "Name"),
+                SgEventWeb.Fields.nowLive, new TemplateField(SgEventWeb.Fields.nowLive, true, null, false),
+                SgEventWeb.Fields.description, new TemplateField(SgEventWeb.Fields.description, true, null, null),
+                SgEventWeb.Fields.date, new TemplateField(SgEventWeb.Fields.date, true, null, Instant.ofEpochSecond(0)),
+                SgEventWeb.Fields.participants, new TemplateField(SgEventWeb.Fields.participants, true, List.of(), List.of()),
+                SgEventWeb.Fields.imageUrl, new TemplateField(SgEventWeb.Fields.imageUrl, true, null, null)
         ));
 
         String result = templateService.buildMsg(templateName, ctx);
@@ -75,11 +78,12 @@ class StopgameTemplateServiceTest {
         Map<String, Object> ctx = new HashMap<>();
         ctx.put("newEvent", false);
         ctx.put("fields", Map.of(
-                SgEvent.Fields.name, new TemplateField(SgEvent.Fields.name, true, "Old name", ""),
-                SgEvent.Fields.nowLive, new TemplateField(SgEvent.Fields.nowLive, true, false, false),
-                SgEvent.Fields.description, new TemplateField(SgEvent.Fields.description, true, "Old description", null),
-                SgEvent.Fields.date, new TemplateField(SgEvent.Fields.date, true, Instant.ofEpochSecond(0), null),
-                SgEvent.Fields.participants, new TemplateField(SgEvent.Fields.participants, true, List.of("Streamer 1"), List.of())
+                SgEventWeb.Fields.name, new TemplateField(SgEventWeb.Fields.name, true, "Old name", ""),
+                SgEventWeb.Fields.nowLive, new TemplateField(SgEventWeb.Fields.nowLive, true, false, false),
+                SgEventWeb.Fields.description, new TemplateField(SgEventWeb.Fields.description, true, "Old description", null),
+                SgEventWeb.Fields.date, new TemplateField(SgEventWeb.Fields.date, true, Instant.ofEpochSecond(0), null),
+                SgEventWeb.Fields.participants, new TemplateField(SgEventWeb.Fields.participants, true, List.of("Streamer 1"), List.of()),
+                SgEventWeb.Fields.imageUrl, new TemplateField(SgEventWeb.Fields.imageUrl, true, "https://example.com/1.jpg", "")
         ));
 
         String result = templateService.buildMsg(templateName, ctx);
@@ -90,6 +94,7 @@ class StopgameTemplateServiceTest {
                 📅 01 января, 03:00 → <пусто>
                 🧑‍🧒‍🧒 Streamer 1 → <пусто>
                 ℹ️ ... → <пусто>
+                🖼️ Новый постер
                 """);
     }
 
@@ -99,11 +104,12 @@ class StopgameTemplateServiceTest {
         Map<String, Object> ctx = new HashMap<>();
         ctx.put("newEvent", true);
         ctx.put("fields", Map.of(
-                SgEvent.Fields.name, new TemplateField(SgEvent.Fields.name, true, null, "Name"),
-                SgEvent.Fields.nowLive, new TemplateField(SgEvent.Fields.nowLive, true, false, false),
-                SgEvent.Fields.description, new TemplateField(SgEvent.Fields.description, true, "", "Description"),
-                SgEvent.Fields.date, new TemplateField(SgEvent.Fields.date, true, null, Instant.ofEpochSecond(0)),
-                SgEvent.Fields.participants, new TemplateField(SgEvent.Fields.participants, true, emptyList(), emptyList())
+                SgEventWeb.Fields.name, new TemplateField(SgEventWeb.Fields.name, true, null, "Name"),
+                SgEventWeb.Fields.nowLive, new TemplateField(SgEventWeb.Fields.nowLive, true, false, false),
+                SgEventWeb.Fields.description, new TemplateField(SgEventWeb.Fields.description, true, "", "Description"),
+                SgEventWeb.Fields.date, new TemplateField(SgEventWeb.Fields.date, true, null, Instant.ofEpochSecond(0)),
+                SgEventWeb.Fields.participants, new TemplateField(SgEventWeb.Fields.participants, true, emptyList(), emptyList()),
+                SgEventWeb.Fields.imageUrl, new TemplateField(SgEventWeb.Fields.imageUrl, true, "", "https://example.com/2.jpg")
         ));
 
         String result = templateService.buildMsg(templateName, ctx);
@@ -122,11 +128,12 @@ class StopgameTemplateServiceTest {
         Map<String, Object> ctx = new HashMap<>();
         ctx.put("newEvent", false);
         ctx.put("fields", Map.of(
-                SgEvent.Fields.name, new TemplateField(SgEvent.Fields.name, false, "Name", "Name"),
-                SgEvent.Fields.nowLive, new TemplateField(SgEvent.Fields.nowLive, true, false, true),
-                SgEvent.Fields.description, new TemplateField(SgEvent.Fields.description, false, "Description", "Description"),
-                SgEvent.Fields.date, new TemplateField(SgEvent.Fields.date, true, Instant.ofEpochSecond(0), null),
-                SgEvent.Fields.participants, new TemplateField(SgEvent.Fields.participants, false, emptyList(), emptyList())
+                SgEventWeb.Fields.name, new TemplateField(SgEventWeb.Fields.name, false, "Name", "Name"),
+                SgEventWeb.Fields.nowLive, new TemplateField(SgEventWeb.Fields.nowLive, true, false, true),
+                SgEventWeb.Fields.description, new TemplateField(SgEventWeb.Fields.description, false, "Description", "Description"),
+                SgEventWeb.Fields.date, new TemplateField(SgEventWeb.Fields.date, true, Instant.ofEpochSecond(0), null),
+                SgEventWeb.Fields.participants, new TemplateField(SgEventWeb.Fields.participants, false, emptyList(), emptyList()),
+                SgEventWeb.Fields.imageUrl, new TemplateField(SgEventWeb.Fields.imageUrl, false, "https://example.com/1.jpg", "https://example.com/1.jpg")
         ));
 
         String result = templateService.buildMsg(templateName, ctx);
