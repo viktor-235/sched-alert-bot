@@ -1,5 +1,9 @@
 package com.github.viktor235.schedalertbot.telegram;
 
+import com.github.viktor235.schedalertbot.telegram.config.BotConfig;
+import com.github.viktor235.schedalertbot.telegram.config.Command;
+import com.github.viktor235.schedalertbot.telegram.config.CommandContext;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,8 +18,6 @@ import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,9 +46,14 @@ public abstract class AbstractTelegramService extends TelegramLongPollingBot {
         return botToken;
     }
 
-    protected abstract TelegramService.Command[] getCommands();
+    protected BotConfig config;
 
-    protected abstract CommandHandler getCommand(String message);
+    protected abstract BotConfig initBot();
+
+    @PostConstruct
+    private void init() {
+        config = initBot();
+    }
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -59,7 +66,7 @@ public abstract class AbstractTelegramService extends TelegramLongPollingBot {
         String username = message.getFrom().getUserName();
         String msg = message.getText();
 
-        CommandHandler command = getCommand(msg);
+        Command command = config.getCommand(msg);
         if (command == null) {
             sendMessage(userId, "Unknown command. Try:\n" + getAvailableCommands());
             return;
@@ -69,12 +76,12 @@ public abstract class AbstractTelegramService extends TelegramLongPollingBot {
     }
 
     protected String getAvailableCommands() {
-        return Arrays.stream(getCommands())
-                .map(cmd -> cmd.getCommand() + " " + cmd.getDescription())
+        return config.getCommands().stream()
+                .map(cmd -> cmd.getName() + " " + cmd.getDescription())
                 .collect(Collectors.joining("\n"));
     }
 
-    protected void handleCommand(CommandHandler command, String userId, String username, String msg) {
+    protected void handleCommand(Command command, String userId, String username, String msg) {
         if (!command.isAuthRequired()) {
             CommandContext ctx = new CommandContext(userId, username, msg, null);
             command.execute(ctx);
@@ -93,10 +100,9 @@ public abstract class AbstractTelegramService extends TelegramLongPollingBot {
     }
 
     protected void setupBotCommands() {
-        List<BotCommand> commands = new ArrayList<>();
-        for (CommandHandler cmd : getCommands()) {
-            commands.add(new BotCommand(cmd.getCommand(), cmd.getDescription()));
-        }
+        List<BotCommand> commands = config.getCommands().stream()
+                .map(cmd -> new BotCommand(cmd.getName(), cmd.getDescription()))
+                .toList();
 
         try {
             execute(new SetMyCommands(commands, new BotCommandScopeDefault(), null));
@@ -139,8 +145,5 @@ public abstract class AbstractTelegramService extends TelegramLongPollingBot {
 
     public List<TelegramUser> getUsers() {
         return userRepository.findAll();
-    }
-
-    public record CommandContext(String userId, String username, String msg, TelegramUser user) {
     }
 }

@@ -1,78 +1,48 @@
 package com.github.viktor235.schedalertbot.telegram;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import com.github.viktor235.schedalertbot.telegram.config.BotConfig;
+import com.github.viktor235.schedalertbot.telegram.config.Command;
+import com.github.viktor235.schedalertbot.telegram.config.CommandContext;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.function.BiConsumer;
 
 @Service
 @Slf4j
 public class TelegramService extends AbstractTelegramService {
-
-    @RequiredArgsConstructor
-    @Getter
-    public enum Command implements CommandHandler {
-        START("/start", "Register new user or reset settings",
-                false, false, TelegramService::handleStart),
-        CHANNEL("/channel", "Set up channel",
-                true, false, TelegramService::handleChannel),
-        STATUS("/status", "Show current status",
-                true, true, TelegramService::handleStatus),
-        STOP("/stop", "Unsubscribe from bot",
-                true, false, TelegramService::handleStop);
-
-        @Setter
-        private static ApplicationContext appContext;
-
-        private final String command;
-        private final String description;
-        private final boolean authRequired;
-        private final boolean adminOnly;
-        private final BiConsumer<TelegramService, CommandContext> handler;
-
-        public static Command findByMessage(String msg) {
-            return Arrays.stream(values())
-                    .filter(cmd -> msg.toLowerCase().startsWith(cmd.command.toLowerCase()))
-                    .findFirst()
-                    .orElse(null);
-        }
-
-        @Override
-        public void execute(CommandContext context) {
-            TelegramService tgService = appContext.getBean(TelegramService.class);
-            handler.accept(tgService, context);
-        }
-
-        @Component
-        public static class EnumContextInjector implements ApplicationContextAware {
-            @Override
-            public void setApplicationContext(ApplicationContext appContext) {
-                Command.setAppContext(appContext);
-            }
-        }
-    }
 
     public TelegramService(TelegramUserRepository userRepository) {
         super(userRepository);
     }
 
     @Override
-    protected Command[] getCommands() {
-        return Command.values();
-    }
-
-    @Override
-    protected Command getCommand(String message) {
-        return Command.findByMessage(message);
+    protected BotConfig initBot() {
+        return BotConfig.builder()
+                .command(Command.builder()
+                        .name("/start")
+                        .description("Register new user or reset settings")
+                        .authRequired(false)
+                        .handler(this::handleStart)
+                        .build())
+                .command(Command.builder()
+                        .name("/channel")
+                        .description("Set up channel")
+                        .handler(this::handleChannel)
+                        .build())
+                .command(Command.builder()
+                        .name("/status")
+                        .description("Show current status")
+                        .adminOnly(true)
+                        .handler(this::handleStatus)
+                        .build())
+                .command(Command.builder()
+                        .name("/stop")
+                        .description("Unsubscribe from bot")
+                        .handler(this::handleStop)
+                        .build())
+                .build();
     }
 
     private void handleStart(CommandContext ctx) {
