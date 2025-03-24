@@ -113,6 +113,7 @@ public abstract class AbstractTelegramService extends TelegramLongPollingBot {
 
     public void sendMessage(String chatId, String message) {
         SendMessage sendMessage = new SendMessage();
+        sendMessage.setParseMode(config.getParseMode());
         sendMessage.setChatId(chatId);
         sendMessage.setText(message);
 
@@ -133,6 +134,7 @@ public abstract class AbstractTelegramService extends TelegramLongPollingBot {
         sendPhoto.setChatId(chatId);
         sendPhoto.setPhoto(new InputFile(imageUrl));
         if (isNotEmpty(caption)) {
+            sendPhoto.setParseMode(config.getParseMode());
             sendPhoto.setCaption(caption);
         }
 

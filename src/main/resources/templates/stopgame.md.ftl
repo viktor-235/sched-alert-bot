@@ -81,7 +81,7 @@
 <#assign result = "" />
 <#assign nowLive = fields["nowLive"].newValue />
 <#if nowLive>
-    <#assign result += "🔴 В эфире [Twitch](https://www.twitch.tv/stopgameru)/[YouTube](https://www.youtube.com/@StopgameRuOnline)\n" />
+    <#assign result += "🔴 В эфире <a href='https://www.twitch.tv/stopgameru'>Twitch</a>/<a href='https://www.youtube.com/@StopgameRuOnline'>YouTube</a>\n" />
 <#elseif newEvent>
     <#assign result += "🆕 Новое событие\n" />
 <#else>

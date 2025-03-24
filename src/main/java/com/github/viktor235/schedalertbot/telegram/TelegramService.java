@@ -5,6 +5,7 @@ import com.github.viktor235.schedalertbot.telegram.config.Command;
 import com.github.viktor235.schedalertbot.telegram.config.CommandContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -20,6 +21,7 @@ public class TelegramService extends AbstractTelegramService {
     @Override
     protected BotConfig initBot() {
         return BotConfig.builder()
+                .parseMode(ParseMode.HTML)
                 .command(Command.builder()
                         .name("/start")
                         .description("Register new user or reset settings")

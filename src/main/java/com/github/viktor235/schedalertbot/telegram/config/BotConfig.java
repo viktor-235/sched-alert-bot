@@ -10,8 +10,9 @@ import java.util.List;
 @Builder
 public class BotConfig {
 
+    private String parseMode;
     @Singular
-    List<Command> commands;
+    private List<Command> commands;
 
     public Command getCommand(String message) {
         return commands.stream()

@@ -139,7 +139,7 @@ class SgTemplateServiceTest {
         String result = templateService.buildMsg(templateName, ctx);
 
         assertThat(result).isEqualTo("""
-                🔴 В эфире [Twitch](https://www.twitch.tv/stopgameru)/[YouTube](https://www.youtube.com/@StopgameRuOnline)
+                🔴 В эфире <a href='https://www.twitch.tv/stopgameru'>Twitch</a>/<a href='https://www.youtube.com/@StopgameRuOnline'>YouTube</a>
                 🎦 Name
                 ℹ️ Description
                 """);
