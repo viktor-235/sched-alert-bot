@@ -24,5 +24,11 @@ public class SchedAlertBotApplication {
         ConfigurableApplicationContext ctx = SpringApplication.run(SchedAlertBotApplication.class, args);
         TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
         botsApi.registerBot(ctx.getBean("telegramService", TelegramLongPollingBot.class));
+
+//        TelegramService s = ctx.getBean(TelegramService.class);
+//        s.sendMessage("399655462", """
+//                🔴 В эфире <a href='https://www.twitch.tv/stopgameru'>Twitch</a>/<a href='https://www.youtube.com/@StopgameRuOnline'>YouTube</a>
+//                🎦 Name
+//                ℹ️ Description""");
     }
 }
