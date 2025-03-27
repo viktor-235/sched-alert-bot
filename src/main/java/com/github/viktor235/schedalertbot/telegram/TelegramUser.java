@@ -13,20 +13,23 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.Instant;
 
-@Document(collection = "users")
+import static com.github.viktor235.schedalertbot.telegram.TelegramUser.COLLECTION_NAME;
+
+@Document(COLLECTION_NAME)
 @Getter
 @Setter
 @Builder
 @ToString
 public class TelegramUser {
-    //todo audit
+
+    public static final String COLLECTION_NAME = "users";
 
     @Id
     private String id;
     @Field
     private String username;
     @Field
-    private String channelId;
+    private String targetChatId;
     @CreatedDate
     private Instant createdAt;
     @LastModifiedDate

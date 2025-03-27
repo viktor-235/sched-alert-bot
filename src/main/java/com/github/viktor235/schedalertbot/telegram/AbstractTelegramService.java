@@ -1,8 +1,8 @@
 package com.github.viktor235.schedalertbot.telegram;
 
 import com.github.viktor235.schedalertbot.telegram.config.BotConfig;
+import com.github.viktor235.schedalertbot.telegram.config.Callback;
 import com.github.viktor235.schedalertbot.telegram.config.Command;
-import com.github.viktor235.schedalertbot.telegram.config.CommandContext;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +16,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
@@ -57,10 +58,20 @@ public abstract class AbstractTelegramService extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+        if (update.hasCallbackQuery()) {
+            String callbackData = update.getCallbackQuery().getData();
+            Long chatId = update.getCallbackQuery().getMessage().getChatId();
+            Callback callback = config.getCallback(callbackData);
+            callback.execute(chatId);
+            return;
+        }
+
+        setupBotCommands();
+
         if (!update.hasMessage() || !update.getMessage().hasText()) {
             return;
         }
-        setupBotCommands();
+
         Message message = update.getMessage();
         String userId = String.valueOf(message.getFrom().getId());
         String username = message.getFrom().getUserName();
@@ -83,7 +94,7 @@ public abstract class AbstractTelegramService extends TelegramLongPollingBot {
 
     protected void handleCommand(Command command, String userId, String username, String msg) {
         if (!command.isAuthRequired()) {
-            CommandContext ctx = new CommandContext(userId, username, msg, null);
+            Command.Context ctx = new Command.Context(userId, username, msg, null);
             command.execute(ctx);
             return;
         }
@@ -95,7 +106,7 @@ public abstract class AbstractTelegramService extends TelegramLongPollingBot {
                 });
         if (user == null) return;
 
-        CommandContext ctx = new CommandContext(userId, username, msg, user);
+        Command.Context ctx = new Command.Context(userId, username, msg, user);
         command.execute(ctx);
     }
 
@@ -112,34 +123,44 @@ public abstract class AbstractTelegramService extends TelegramLongPollingBot {
     }
 
     public void sendMessage(String chatId, String message) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setParseMode(config.getParseMode());
-        sendMessage.setChatId(chatId);
-        sendMessage.setText(message);
+        sendMessage(chatId, message, null);
+    }
+
+    public void sendMessage(String chatId, String message, ReplyKeyboard replyKeyboard) {
+        SendMessage msg = new SendMessage();
+        msg.setParseMode(config.getParseMode());
+        msg.setChatId(chatId);
+        msg.setText(message);
+        msg.setReplyMarkup(replyKeyboard);
 
         try {
-            execute(sendMessage);
+            execute(msg);
         } catch (TelegramApiException e) {
             log.error("Error sending message: {}", e.getMessage(), e);
         }
     }
 
     public void sendPhotoMessage(String chatId, String imageUrl, String caption) {
+        sendPhotoMessage(chatId, imageUrl, caption, null);
+    }
+
+    public void sendPhotoMessage(String chatId, String imageUrl, String caption, ReplyKeyboard replyKeyboard) {
         if (isEmpty(imageUrl)) {
-            sendMessage(chatId, caption);
+            sendMessage(chatId, caption, replyKeyboard);
             return;
         }
 
-        SendPhoto sendPhoto = new SendPhoto();
-        sendPhoto.setChatId(chatId);
-        sendPhoto.setPhoto(new InputFile(imageUrl));
+        SendPhoto msg = new SendPhoto();
+        msg.setChatId(chatId);
+        msg.setPhoto(new InputFile(imageUrl));
+        msg.setReplyMarkup(replyKeyboard);
         if (isNotEmpty(caption)) {
-            sendPhoto.setParseMode(config.getParseMode());
-            sendPhoto.setCaption(caption);
+            msg.setParseMode(config.getParseMode());
+            msg.setCaption(caption);
         }
 
         try {
-            execute(sendPhoto);
+            execute(msg);
         } catch (TelegramApiException e) {
             log.error("Error sending photo message: {}", e.getMessage(), e);
         }
