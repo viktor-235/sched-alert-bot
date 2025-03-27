@@ -1,5 +1,6 @@
 package com.github.viktor235.schedalertbot.telegram.config;
 
+import com.github.viktor235.schedalertbot.telegram.TelegramUser;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -15,9 +16,16 @@ public class Command {
     private boolean authRequired = true;
     @Builder.Default
     private boolean adminOnly = false;
-    private final Consumer<CommandContext> handler;
+    private final Consumer<Context> action;
 
-    public void execute(CommandContext ctx) {
-        handler.accept(ctx);
+    public void execute(Context ctx) {
+        action.accept(ctx);
+    }
+
+    public record Context(
+            String userId,
+            String username,
+            String msg,
+            TelegramUser user) {
     }
 }
