@@ -109,12 +109,9 @@ public class SgProcessor {
 
 
     private EventSnapshot sendTgMsg(EventSnapshot event) {
-        for (TelegramUser usr : tgService.getUsers()) {//TODO reuse prev users
-            tgService.sendPhotoMessage(usr.getId(), event.web.getImageUrl(), event.message);
-            if (usr.getChannelId() != null) {
-                tgService.sendPhotoMessage(usr.getChannelId(), event.web.getImageUrl(), event.message);
-            }
-        }
+        tgService.getUsers().forEach(usr ->
+                tgService.sendPhotoMessage(usr.getTargetChatId(), event.web.getImageUrl(), event.message)
+        );
         return event;
     }
 
