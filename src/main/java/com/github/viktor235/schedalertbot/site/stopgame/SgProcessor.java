@@ -2,21 +2,21 @@ package com.github.viktor235.schedalertbot.site.stopgame;
 
 import com.github.viktor235.schedalertbot.compare.CompareService;
 import com.github.viktor235.schedalertbot.compare.FieldDiff;
-import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventEntry;
-import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventRepository;
-import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventWeb;
-import com.github.viktor235.schedalertbot.site.stopgame.model.SgMapper;
+import com.github.viktor235.schedalertbot.site.stopgame.model.*;
 import com.github.viktor235.schedalertbot.telegram.TelegramService;
 import com.github.viktor235.schedalertbot.telegram.TelegramUser;
 import com.github.viktor235.schedalertbot.template.TemplateField;
 import com.github.viktor235.schedalertbot.template.TemplateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.SetUtils;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -44,22 +44,53 @@ public class SgProcessor {
             return;
         }
 
-        List<SgEventWeb> events = pageParser.parse();
-        log.info("Found {} streams", events.size());
-        events.stream()
-                .map(this::getDbVersion)
+        getData().stream()
                 .map(this::compare)
-                .filter(EventSnapshot::changed) //todo check isInFuture
+                .map(this::updateStatus)
+                .filter(EventSnapshot::changed)
                 .map(this::generateMsg)
                 .map(this::sendTgMsg)
                 .forEach(this::saveChanges);
     }
 
-    private EventSnapshot getDbVersion(SgEventWeb webEvent) {
-        log.debug("Retrieving db data for {}", webEvent);
-        SgEventEntry dbEvent = repo.findById(webEvent.getId())
-                .orElse(null);
-        return EventSnapshot.init(dbEvent, webEvent);
+    /**
+     * Retrieves and merges event data from web source and database.
+     *
+     * @return list of {@link EventSnapshot} containing merged event data.
+     * <br/>Each {@link EventSnapshot} may contain:
+     * <ul>
+     *   <li>only web event (new event)</li>
+     *   <li>only database event (canceled event)</li>
+     *   <li>both events (updated event)</li>
+     * </ul>
+     */
+    private List<EventSnapshot> getData() {
+        // Create maps for web and database events
+        Map<String, SgEventWeb> webEvents = pageParser.parse().stream()
+                .collect(Collectors.toMap(SgEventWeb::getId, Function.identity()));
+        Map<String, SgEventEntry> dbEvents = repo.findAllByStatusIn(Set.of(EventStatus.SCHEDULED, EventStatus.LIVE)).stream()
+                .collect(Collectors.toMap(SgEventEntry::getId, Function.identity()));
+
+        // To find events which presented on site but canceled or finished in DB
+        Set<String> onSiteButCanceledIds = webEvents.keySet().stream()
+                .filter(e -> !dbEvents.containsKey(e))
+                .collect(Collectors.toSet());
+        Map<String, SgEventEntry> onSiteButCanceled = repo.findAllByIdIn(onSiteButCanceledIds).stream()
+                .collect(Collectors.toMap(SgEventEntry::getId, Function.identity()));
+        dbEvents.putAll(onSiteButCanceled);
+
+        log.info("Found {} web events and {} db events", webEvents.size(), dbEvents.size());
+
+        Set<String> allKeys = SetUtils.union(webEvents.keySet(), dbEvents.keySet());
+
+        // Perform full outer join
+        return allKeys.stream()
+                .map(id -> {
+                    SgEventWeb webEvent = webEvents.get(id); // may be null
+                    SgEventEntry dbEvent = dbEvents.get(id); // may be null
+                    return EventSnapshot.init(dbEvent, webEvent);
+                })
+                .toList();
     }
 
     private EventSnapshot compare(EventSnapshot event) {
@@ -72,8 +103,40 @@ public class SgProcessor {
         return newEvent;
     }
 
+    EventSnapshot updateStatus(EventSnapshot event) {
+        EventStatus prevStatus = event.db != null ? event.db.getStatus() : null;
+        EventStatus newStatus;
+        if (event.web == null) { // Event disappeared from the site
+            switch (prevStatus) {
+                case EventStatus.LIVE -> newStatus = EventStatus.FINISHED; // Event has ended
+                case EventStatus.SCHEDULED -> newStatus = EventStatus.CANCELED;  // Event was canceled before start
+                case null -> {
+                    newStatus = EventStatus.CANCELED;
+                    log.warn("Event {} has no status in DB", event.db != null ? event.db.getId() : null);
+                }
+                default -> {
+                    newStatus = prevStatus;
+                    log.warn("Unexpected status for event {}: {}", event.db.getId(), prevStatus);
+                }
+            }
+        } else { // Event exists on the site
+            if (prevStatus == EventStatus.CANCELED) { // When a canceled event returns to the site
+                log.info("Canceled event {} has returned to the site", event.db.getId());
+                newStatus = event.web.isNowLive() ? EventStatus.LIVE : EventStatus.SCHEDULED;
+            } else {
+                if (event.web.isNowLive()) {
+                    newStatus = EventStatus.LIVE;
+                } else {
+                    newStatus = EventStatus.SCHEDULED;
+                }
+            }
+        }
+        log.debug("Updating event status: {} -> {}", prevStatus, newStatus);
+        return event.withNewStatus(newStatus);
+    }
+
     private EventSnapshot generateMsg(EventSnapshot event) {
-        log.debug("Generating post text for {}", event.web);
+        log.debug("Generating post text for {}", event);
         Map<String, Object> ctx = new HashMap<>();
 
         Map<String, FieldDiff> changesMap = event.fieldDiffs.stream()
@@ -84,8 +147,8 @@ public class SgProcessor {
 
         ctx.put("newEvent", event.db == null);
         ctx.put("fields", Map.of(
+                "status", new TemplateField("status", false, event.db != null ? event.db.getStatus() : null, event.newStatus),
                 SgEventWeb.Fields.name, genTemplField(SgEventWeb.Fields.name, changesMap, event.web.getName()),
-                SgEventWeb.Fields.nowLive, genTemplField(SgEventWeb.Fields.nowLive, changesMap, event.web.isNowLive()),
                 SgEventWeb.Fields.date, genTemplField(SgEventWeb.Fields.date, changesMap, event.web.getDate()),
                 SgEventWeb.Fields.participants, genTemplField(SgEventWeb.Fields.participants, changesMap, event.web.getParticipants()),
                 SgEventWeb.Fields.description, genTemplField(SgEventWeb.Fields.description, changesMap, event.web.getDescription()),
@@ -107,7 +170,6 @@ public class SgProcessor {
         );
     }
 
-
     private EventSnapshot sendTgMsg(EventSnapshot event) {
         tgService.getUsers().forEach(usr ->
                 tgService.sendPhotoMessage(usr.getTargetChatId(), event.web.getImageUrl(), event.message)
@@ -115,34 +177,47 @@ public class SgProcessor {
         return event;
     }
 
-    private EventSnapshot saveChanges(EventSnapshot event) {
-        if (event.db != null) {
-            mapper.updateFromWeb(event.web, event.db);
-            repo.save(event.db);
-        } else {
-            repo.save(
-                    mapper.toEntry(event.web)
-            );
+    private void saveChanges(EventSnapshot event) {
+        SgEventEntry result = event.db != null
+                ? event.db
+                : mapper.toEntry(event.web);
+        if (event.web != null && event.db != null) {
+            mapper.updateFromWeb(event.web, result);
         }
-        return event;
+
+        switch (event.newStatus) {
+            case SCHEDULED -> {
+                // Nothing to do here
+            }
+            case LIVE -> result.setStartedAt(Instant.now());
+            case FINISHED, CANCELED -> result.setEndedAt(Instant.now());
+        }
+
+        result.setStatus(event.newStatus);
+        repo.save(result);
     }
 
     public record EventSnapshot(SgEventEntry db,
                                 SgEventWeb web,
+                                EventStatus newStatus,
                                 boolean changed,
                                 List<FieldDiff> fieldDiffs,
                                 String message) {
 
         public static EventSnapshot init(SgEventEntry db, SgEventWeb web) {
-            return new EventSnapshot(db, web, true, null, null);
+            return new EventSnapshot(db, web, null, true, null, null);
         }
 
         public EventSnapshot withDiffReport(boolean changed, List<FieldDiff> fieldDiffs) {
-            return new EventSnapshot(db, web, changed, fieldDiffs, message);
+            return new EventSnapshot(db, web, newStatus, changed, fieldDiffs, message);
         }
 
         public EventSnapshot withMessage(String msg) {
-            return new EventSnapshot(db, web, changed, fieldDiffs, msg);
+            return new EventSnapshot(db, web, newStatus, changed, fieldDiffs, msg);
+        }
+
+        public EventSnapshot withNewStatus(EventStatus status) {
+            return new EventSnapshot(db, web, status, changed, fieldDiffs, message);
         }
     }
 }

@@ -79,8 +79,10 @@
 <#-- Template -->
 
 <#assign result = "" />
-<#assign nowLive = fields["nowLive"].newValue />
-<#if nowLive>
+<#assign status = fields["status"].newValue!"" />
+<#if status == "CANCELED">
+    <#assign result += "❌ Отмена события\n" />
+<#elseif status == "LIVE">
     <#assign result += "🔴 В эфире <a href='https://www.twitch.tv/stopgameru'>Twitch</a>/<a href='https://www.youtube.com/@StopgameRuOnline'>YouTube</a>\n" />
 <#elseif newEvent>
     <#assign result += "🆕 Новое событие\n" />
@@ -88,7 +90,9 @@
     <#assign result += "🆙 Обновление события\n" />
 </#if>
 <#assign result += addText("🎦 ", fields["name"]) />
-<#assign result += nowLive?string("", addDate("📅 ", fields["date"])) />
+<#if status == "SCHEDULED" || status == "CANCELED">
+    <#assign result += addDate("📅 ", fields["date"]) />
+</#if>
 <#assign result += addList("🧑‍🧒‍🧒 ", fields["participants"]) />
 <#assign result += addText("ℹ️ ", fields["description"], true) />
 <#assign result += addPoster("🖼️ ", fields["imageUrl"]) />
