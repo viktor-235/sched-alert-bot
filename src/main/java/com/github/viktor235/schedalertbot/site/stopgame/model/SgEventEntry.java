@@ -29,6 +29,8 @@ public class SgEventEntry {
     @Id
     private String id;
     @Field
+    private EventStatus status;
+    @Field
     private String name;
     @Field
     private Instant date;
@@ -37,9 +39,11 @@ public class SgEventEntry {
     @Field
     private List<String> participants;
     @Field
-    private boolean nowLive;
-    @Field
     private String imageUrl;
+    @Field
+    private Instant startedAt;
+    @Field
+    private Instant endedAt;
 
     @DiffIgnore
     @CreatedDate
