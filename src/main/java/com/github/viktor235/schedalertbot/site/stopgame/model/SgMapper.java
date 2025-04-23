@@ -23,7 +23,12 @@ public interface SgMapper {
     @BeanMapping(ignoreUnmappedSourceProperties = {"nowLive"})
     SgEventEntry toEntry(SgEventWeb web);
 
-    @Mapping(target = "nowLive", ignore = true)
-    @BeanMapping(ignoreUnmappedSourceProperties = {"status", "createdAt", "updatedAt", "version", "startedAt", "endedAt"})
+    @Mapping(target = "nowLive", source = "db", qualifiedByName = "isNowLive")
+    @BeanMapping(ignoreUnmappedSourceProperties = {"status", "createdAt", "updatedAt", "version", "startDetectedAt", "startLastCheckedAt", "endDetectedAt", "endLastCheckedAt"})
     SgEventWeb toWeb(SgEventEntry db);
+
+    @Named("isNowLive")
+    default boolean isNowLive(SgEventEntry db) {
+        return db.getStatus() == EventStatus.LIVE;
+    }
 }
