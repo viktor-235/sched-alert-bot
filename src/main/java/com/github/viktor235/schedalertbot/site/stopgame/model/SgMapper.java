@@ -24,7 +24,7 @@ public interface SgMapper {
     SgEventEntry toEntry(SgEventWeb web);
 
     @Mapping(target = "nowLive", source = "db", qualifiedByName = "isNowLive")
-    @BeanMapping(ignoreUnmappedSourceProperties = {"status", "createdAt", "updatedAt", "version", "startDetectedAt", "startLastCheckedAt", "endDetectedAt", "endLastCheckedAt"})
+    @BeanMapping(ignoreUnmappedSourceProperties = {"status", "createdAt", "updatedAt", "version", "startedAt", "endedAt"})
     SgEventWeb toWeb(SgEventEntry db);
 
     @Named("isNowLive")
