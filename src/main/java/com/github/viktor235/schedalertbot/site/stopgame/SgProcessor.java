@@ -10,6 +10,7 @@ import com.github.viktor235.schedalertbot.template.TemplateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.SetUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -148,11 +149,11 @@ public class SgProcessor {
         ctx.put("newEvent", event.db == null);
         ctx.put("fields", Map.of(
                 "status", new TemplateField("status", false, event.db != null ? event.db.getStatus() : null, event.newStatus),
-                SgEventWeb.Fields.name, genTemplField(SgEventWeb.Fields.name, changesMap, event.web.getName()),
-                SgEventWeb.Fields.date, genTemplField(SgEventWeb.Fields.date, changesMap, event.web.getDate()),
-                SgEventWeb.Fields.participants, genTemplField(SgEventWeb.Fields.participants, changesMap, event.web.getParticipants()),
-                SgEventWeb.Fields.description, genTemplField(SgEventWeb.Fields.description, changesMap, event.web.getDescription()),
-                SgEventWeb.Fields.imageUrl, genTemplField(SgEventWeb.Fields.imageUrl, changesMap, event.web.getImageUrl())
+                SgEventWeb.Fields.name, genTemplField(SgEventWeb.Fields.name, changesMap, event.web != null ? event.web.getName() : null),
+                SgEventWeb.Fields.date, genTemplField(SgEventWeb.Fields.date, changesMap, event.web != null ? event.web.getDate() : null),
+                SgEventWeb.Fields.participants, genTemplField(SgEventWeb.Fields.participants, changesMap, event.web != null ? event.web.getParticipants() : null),
+                SgEventWeb.Fields.description, genTemplField(SgEventWeb.Fields.description, changesMap, event.web != null ? event.web.getDescription() : null),
+                SgEventWeb.Fields.imageUrl, genTemplField(SgEventWeb.Fields.imageUrl, changesMap, event.web != null ? event.web.getImageUrl() : null)
         ));
 
         return event.withMessage(
@@ -171,9 +172,12 @@ public class SgProcessor {
     }
 
     private EventSnapshot sendTgMsg(EventSnapshot event) {
-        tgService.getUsers().forEach(usr ->
-                tgService.sendPhotoMessage(usr.getTargetChatId(), event.web.getImageUrl(), event.message)
-        );
+        String img = ObjectUtils.firstNonNull(
+                event.web != null ? event.web.getImageUrl() : null,
+                event.db != null ? event.db.getImageUrl() : null);
+        for (TelegramUser usr : tgService.getUsers()) {
+            tgService.sendPhotoMessage(usr.getTargetChatId(), img, event.message);
+        }
         return event;
     }
 

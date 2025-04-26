@@ -5,11 +5,26 @@
 
 <#-- Functions -->
 
-<#function addText prefix field hideOldValue=false>
+<#function addTitle status newEvent>
+    <#if status == "CANCELED">
+        <#return "❌ Отмена события\n" />
+    <#elseif status == "LIVE">
+        <#return "🔴 В эфире <a href='https://www.twitch.tv/stopgameru'>Twitch</a>/<a href='https://www.youtube.com/@StopgameRuOnline'>YouTube</a>\n" />
+    <#elseif newEvent>
+        <#return "🆕 Новое событие\n" />
+    <#else>
+        <#return "🆙 Обновление события\n" />
+    </#if>
+</#function>
+
+<#function addText prefix field status hideOldValue=false>
     <#if !field.newValue?has_content && !field.oldValue?has_content>
         <#return "" />
     </#if>
     <#assign result = prefix />
+    <#if status == "CANCELED">
+        <#return result + field.oldValue + "\n" />
+    </#if>
     <#if field.changed && !newEvent>
         <#if field.oldValue?? && field.oldValue?trim != "">
             <#assign result += hideOldValue?string("...", field.oldValue) />
@@ -27,11 +42,14 @@
     <#return result + "\n" />
 </#function>
 
-<#function addDate prefix field>
-    <#if !field.newValue?has_content && !field.oldValue?has_content>
+<#function addDate prefix field status>
+    <#if !field.newValue?has_content && !field.oldValue?has_content || status == "LIVE" || status == "FINISHED">
         <#return "" />
     </#if>
     <#assign result = prefix />
+    <#if status == "CANCELED">
+        <#return result + field.oldValue?datetime.iso?string["dd MMMM, HH:mm (z)"] + "\n" />
+    </#if>
     <#if field.changed && !newEvent>
         <#if field.oldValue??>
             <#assign result += field.oldValue?datetime.iso?string["dd MMMM, HH:mm"] />
@@ -49,11 +67,14 @@
     <#return result + "\n" />
 </#function>
 
-<#function addList prefix field>
+<#function addList prefix field status>
     <#if !field.newValue?has_content && !field.oldValue?has_content>
         <#return "" />
     </#if>
     <#assign result = prefix />
+    <#if status == "CANCELED">
+        <#return result + field.oldValue?join(", ") + "\n" />
+    </#if>
     <#if field.changed && !newEvent>
         <#assign result += (field.oldValue?join(", ")! "<пусто>") +  " → " />
         <#if !field.newValue?? || (!field.newValue?has_content)>
@@ -66,8 +87,8 @@
     <#return result + "\n" />
 </#function>
 
-<#function addPoster prefix field>
-    <#if !field.newValue?has_content && !field.oldValue?has_content>
+<#function addPoster prefix field status>
+    <#if !field.newValue?has_content && !field.oldValue?has_content || status == "CANCELED">
         <#return "" />
     </#if>
     <#if field.changed && !newEvent>
@@ -80,20 +101,10 @@
 
 <#assign result = "" />
 <#assign status = fields["status"].newValue!"" />
-<#if status == "CANCELED">
-    <#assign result += "❌ Отмена события\n" />
-<#elseif status == "LIVE">
-    <#assign result += "🔴 В эфире <a href='https://www.twitch.tv/stopgameru'>Twitch</a>/<a href='https://www.youtube.com/@StopgameRuOnline'>YouTube</a>\n" />
-<#elseif newEvent>
-    <#assign result += "🆕 Новое событие\n" />
-<#else>
-    <#assign result += "🆙 Обновление события\n" />
-</#if>
-<#assign result += addText("🎦 ", fields["name"]) />
-<#if status == "SCHEDULED" || status == "CANCELED">
-    <#assign result += addDate("📅 ", fields["date"]) />
-</#if>
-<#assign result += addList("🧑‍🧒‍🧒 ", fields["participants"]) />
-<#assign result += addText("ℹ️ ", fields["description"], true) />
-<#assign result += addPoster("🖼️ ", fields["imageUrl"]) />
+<#assign result += addTitle(status, newEvent) />
+<#assign result += addText("🎦 ", fields["name"], status) />
+<#assign result += addDate("📅 ", fields["date"], status) />
+<#assign result += addList("🧑‍🧒‍🧒 ", fields["participants"], status) />
+<#assign result += addText("ℹ️ ", fields["description"], status, true) />
+<#assign result += addPoster("🖼️ ", fields["imageUrl"],  status) />
 ${result}
