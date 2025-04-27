@@ -13,6 +13,7 @@ import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +38,7 @@ public class SgProcessor {
     private final TemplateService msgBuildingService;
     private final TelegramService tgService;
     private final SgMapper mapper;
+    private final Clock clock;
 
     public void process() {
         List<TelegramUser> users = tgService.getUsers();//todo filter users who subscribed to this site
@@ -193,8 +195,8 @@ public class SgProcessor {
             case SCHEDULED -> {
                 // Nothing to do here
             }
-            case LIVE -> result.setStartedAt(Instant.now());
-            case FINISHED, CANCELED -> result.setEndedAt(Instant.now());
+            case LIVE -> result.setStartedAt(Instant.now(clock));
+            case FINISHED, CANCELED -> result.setEndedAt(Instant.now(clock));
         }
 
         result.setStatus(event.newStatus);

@@ -2,11 +2,11 @@ package com.github.viktor235.schedalertbot.site.stopgame;
 
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventWeb;
 import com.github.viktor235.schedalertbot.web.XpathScraper;
-import lombok.RequiredArgsConstructor;
 import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -20,10 +20,10 @@ import java.util.Locale;
 import java.util.stream.Stream;
 
 @Service
-@RequiredArgsConstructor
 public class SgScraper {
 
     private final XpathScraper scraper;
+    private final Clock clock;
 
     @Value("${site.stopgame.scraper.url}")
     private String url;
@@ -46,10 +46,16 @@ public class SgScraper {
 
     private final Locale ruLocale = Locale.forLanguageTag("ru-RU");
     private final ZoneId zone = ZoneId.of("Europe/Moscow");
-    private final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
-            .appendPattern("d MMMM/HH.mm")
-            .parseDefaulting(ChronoField.YEAR, LocalDateTime.now(zone).getYear())
-            .toFormatter(ruLocale);
+    private final DateTimeFormatter dateTimeFormatter;
+
+    public SgScraper(XpathScraper scraper, Clock clock) {
+        this.scraper = scraper;
+        this.clock = clock;
+        this.dateTimeFormatter = new DateTimeFormatterBuilder()
+                .appendPattern("d MMMM/HH.mm")
+                .parseDefaulting(ChronoField.YEAR, LocalDateTime.now(clock.withZone(zone)).getYear())
+                .toFormatter(ruLocale);
+    }
 
     public List<SgEventWeb> parse() {
         return Stream.of(scraper.parsePage(url, eventSelector))
@@ -85,7 +91,7 @@ public class SgScraper {
      * @throws DateTimeParseException if parsing fails
      */
     Instant extractDate(Element el) {
-        LocalDateTime now = LocalDateTime.now(zone);
+        LocalDateTime now = LocalDateTime.now(clock.withZone(zone));
         String dateTime = scraper.getString(el, dateSelector) + "/" + scraper.getString(el, timeSelector);
         LocalDateTime eventDate = LocalDateTime.parse(dateTime, dateTimeFormatter);
 
