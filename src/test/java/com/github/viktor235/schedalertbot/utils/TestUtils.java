@@ -1,4 +1,4 @@
-package com.github.viktor235.schedalertbot;
+package com.github.viktor235.schedalertbot.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.experimental.UtilityClass;

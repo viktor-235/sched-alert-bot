@@ -1,9 +1,9 @@
 package com.github.viktor235.schedalertbot.site.stopgame;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.viktor235.schedalertbot.TestUtils;
 import com.github.viktor235.schedalertbot.config.JacksonConfig;
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventWeb;
+import com.github.viktor235.schedalertbot.utils.TestUtils;
 import com.github.viktor235.schedalertbot.web.XpathScraper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

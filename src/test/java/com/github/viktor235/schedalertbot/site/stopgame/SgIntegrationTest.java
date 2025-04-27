@@ -2,12 +2,13 @@ package com.github.viktor235.schedalertbot.site.stopgame;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.viktor235.schedalertbot.AbstractIntegrationTest;
-import com.github.viktor235.schedalertbot.TestUtils;
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventEntry;
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventRepository;
 import com.github.viktor235.schedalertbot.telegram.TelegramService;
 import com.github.viktor235.schedalertbot.telegram.TelegramUser;
 import com.github.viktor235.schedalertbot.telegram.TelegramUserRepository;
+import com.github.viktor235.schedalertbot.utils.JsonAssertions;
+import com.github.viktor235.schedalertbot.utils.TestUtils;
 import com.github.viktor235.schedalertbot.web.XpathScraper;
 import lombok.AllArgsConstructor;
 import org.jsoup.Jsoup;
@@ -26,9 +27,9 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true")
@@ -90,30 +91,31 @@ class SgIntegrationTest extends AbstractIntegrationTest {
 
         List<SgEventEntry> actualEvents = repo.findAll();
         List<SgEventEntry> expectedEvents = TestUtils.readJsonListFile(input.expectedDbPath, mapper, SgEventEntry.class);
-        assertThat(actualEvents).hasSize(expectedEvents.size())
-                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("createdAt", "updatedAt")
-                .isEqualTo(expectedEvents);
+        JsonAssertions.assertThatJson(actualEvents)
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualToJson(expectedEvents);
 
-        List<ExpectedMessage> expectedMessages = TestUtils.readJsonListFile(input.expectedMessagesPath, mapper, ExpectedMessage.class);
+        List<MessageWrapper> expectedMsgs = TestUtils.readJsonListFile(input.expectedMessagesPath, mapper, MessageWrapper.class);
         ArgumentCaptor<String> chatIdCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> imageUrlCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
-        verify(telegramService, times(expectedMessages.size()))
+        verify(telegramService, times(expectedMsgs.size()))
                 .sendPhotoMessage(chatIdCaptor.capture(), imageUrlCaptor.capture(), messageCaptor.capture());
 
         List<String> actualChatIds = chatIdCaptor.getAllValues();
         List<String> actualImageUrls = imageUrlCaptor.getAllValues();
         List<String> actualMessages = messageCaptor.getAllValues();
-        for (int i = 0; i < expectedMessages.size(); i++) {
-            assertThat(actualChatIds.get(i)).isEqualTo(expectedMessages.get(i).chatId());
-            assertThat(actualImageUrls.get(i)).isEqualTo(expectedMessages.get(i).imageUrl());
-            assertThat(actualMessages.get(i)).isEqualTo(expectedMessages.get(i).message());
+        List<MessageWrapper> actualMsgs = new ArrayList<>();
+        for (int i = 0; i < actualChatIds.size(); i++) {
+            actualMsgs.add(new MessageWrapper(actualChatIds.get(i), actualImageUrls.get(i), actualMessages.get(i)));
         }
+        JsonAssertions.assertThatJson(actualMsgs)
+                .isEqualToJson(expectedMsgs);
     }
 
     //TODO Добавить кейсы:
 
-    //1. Обновление существующего события
+    //+ 1. Обновление существующего события
     //В базе есть событие, на сайте оно же, но с изменёнными данными (например, изменилось время, статус, картинка, описание и т.д.).
     //Ожидание: событие обновляется в базе, отправляется сообщение об изменении.
 
@@ -142,8 +144,10 @@ class SgIntegrationTest extends AbstractIntegrationTest {
     //9. Пользователь не найден/отсутствует
     //Проверка, что не происходит отправка сообщений, если нет пользователя в базе.
 
-    //10.Ошибка парсинга/некорректный HTML
+    //10. Ошибка парсинга/некорректный HTML
     //Проверка устойчивости к ошибкам парсинга.
+
+    //11. Изменение и удаление картинки
 
     @AllArgsConstructor
     enum InputSource {
@@ -177,6 +181,12 @@ class SgIntegrationTest extends AbstractIntegrationTest {
                 "src/test/resources/web/stopgame/events/b.html",
                 "src/test/resources/web/stopgame/events/a_canceled-b-c_canceled-db-expected.json",
                 "src/test/resources/web/stopgame/events/a_canceled-c_canceled-msg.json"),
+        CHANGED_EVENTS(
+                "Two events in the database are present on the site with updated data (date and description changed). The database should be updated, and notifications about the changes should be sent",
+                "src/test/resources/web/stopgame/events/a-b-c-seed.json",
+                "src/test/resources/web/stopgame/events/a-b_new_date-c_new_desc.html",
+                "src/test/resources/web/stopgame/events/a-b_new_date-c_new_desc-db-expected.json",
+                "src/test/resources/web/stopgame/events/b_new_date-c_new_desc-msg.json")
         ;
 
         private final String description;
@@ -191,6 +201,6 @@ class SgIntegrationTest extends AbstractIntegrationTest {
         }
     }
 
-    public record ExpectedMessage(String chatId, String imageUrl, String message) {
+    public record MessageWrapper(String chatId, String imageUrl, String message) {
     }
 }
