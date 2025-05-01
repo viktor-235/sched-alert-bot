@@ -188,7 +188,7 @@ public class SgProcessor {
                 ? event.db
                 : mapper.toEntry(event.web);
         if (event.web != null && event.db != null) {
-            mapper.updateFromWeb(event.web, result);
+            mapper.updateFromWeb(event.web, result, event.db.getDate());
         }
 
         switch (event.newStatus) {

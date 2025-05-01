@@ -30,7 +30,7 @@ public class SgScraper {
     @Value("${site.stopgame.scraper.selector.event}")
     private String eventSelector;
     @Value("${site.stopgame.scraper.selector.id}")
-    private String idSelector; //todo try xpath for attribute
+    private String idSelector;
     @Value("${site.stopgame.scraper.selector.name}")
     private String nameSelector;
     @Value("${site.stopgame.scraper.selector.date}")
@@ -91,6 +91,7 @@ public class SgScraper {
      * @throws DateTimeParseException if parsing fails
      */
     Instant extractDate(Element el) {
+        //TODO test year calculation
         LocalDateTime now = LocalDateTime.now(clock.withZone(zone));
         String dateTime = scraper.getString(el, dateSelector) + "/" + scraper.getString(el, timeSelector);
         LocalDateTime eventDate = LocalDateTime.parse(dateTime, dateTimeFormatter);

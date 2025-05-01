@@ -168,10 +168,10 @@ class SgIntegrationTest extends AbstractIntegrationTest {
                 null,
                 "src/test/resources/web/stopgame/events/a_live-b-c.html",
                 "src/test/resources/web/stopgame/events/a_live-b-c-db-expected.json",
-                "src/test/resources/web/stopgame/events/a-b_live-c-msg.json"),
+                "src/test/resources/web/stopgame/events/a_live-b-c-msg.json"),
         NO_CHANGES(
                 "No changes between the site and the database, no messages should be sent",
-                "src/test/resources/web/stopgame/events/a-b_live-c-seed.json",
+                "src/test/resources/web/stopgame/events/a_live-b-c-seed.json",
                 "src/test/resources/web/stopgame/events/a_live-b-c.html",
                 "src/test/resources/web/stopgame/events/a_live-b-c-db-expected.json",
                 null),
@@ -186,7 +186,13 @@ class SgIntegrationTest extends AbstractIntegrationTest {
                 "src/test/resources/web/stopgame/events/a-b-c-seed.json",
                 "src/test/resources/web/stopgame/events/a-b_new_date-c_new_desc.html",
                 "src/test/resources/web/stopgame/events/a-b_new_date-c_new_desc-db-expected.json",
-                "src/test/resources/web/stopgame/events/b_new_date-c_new_desc-msg.json")
+                "src/test/resources/web/stopgame/events/b_new_date-c_new_desc-msg.json"),
+        B_FINISHED(
+                "В базе событие было SCHEDULED, на сайте оно стало FINISHED. Ожидание: обновление статуса, отправка сообщения о завершении.",
+                "src/test/resources/web/stopgame/events/a_live-b-c-seed.json",
+                "src/test/resources/web/stopgame/events/b-c.html",
+                "src/test/resources/web/stopgame/events/a_finished-b-c-db-expected.json",
+                null),
         ;
 
         private final String description;
