@@ -1,37 +1,37 @@
 # sched-alert-bot
 
-## Описание
-Проект `sched-alert-bot` предназначен для парсинга расписаний событий с различных сайтов и отправки уведомлений в Telegram.
-Изначально реализовывался для парсинга расписания стримов с сайта stopgame.ru, но в разработан достаточно гибко, для добавления других источников.
+## Description
+The `sched-alert-bot` project is designed to parse event schedules from various websites and send notifications via Telegram.  
+It was originally developed to parse the streaming schedule from stopgame.ru, but it's implemented in a flexible way to support additional sources.
 
-## Технологии
-- Java
-- Spring Boot
-- MongoDB
-- [jsoup](https://jsoup.org/) для парсинга web-страниц
-- [JaVers](https://javers.org/) для выявления изменений
-- [FreeMarker](https://freemarker.apache.org/) для генерации сообщений из шаблонов
-- [TelegramBots](https://github.com/rubenlagus/TelegramBots) для оповещения пользователей
+## Technologies
+- Java  
+- Spring Boot  
+- MongoDB  
+- [jsoup](https://jsoup.org/) for parsing web pages  
+- [JaVers](https://javers.org/) for detecting changes  
+- [FreeMarker](https://freemarker.apache.org/) for generating messages from templates  
+- [TelegramBots](https://github.com/rubenlagus/TelegramBots) for notifying users  
 
-## Конфигурация
-Настройки приложения находятся в файле `resources/application.properties` и `.env`.
-Убедитесь, что вы настроили подключение к MongoDB и Telegram API.
+## Configuration
+Application settings are located in the `resources/application.properties` file and the `.env` file.  
+Make sure you have configured the MongoDB connection and Telegram API credentials.
 
-## Разработка
-Точка входа — Scheduler-класс, например `SgScheduler`.
+## Development
+The entry point is a scheduler class, e.g., `SgScheduler`.
 
 ## TODO
-- [x] Сделать автосборку docker образа
-- [x] Настроить MongoDB audit
-- [x] Сделать форматирование даты (пока просто в МСК tz)
-- [ ] Запрашивать часовой пояс через бот и учитывать часовой пояс при выводе даты. Для каждого юзера придется генерить сообщение отдельно
-- [x] Экранировать значения во время формирования сообщений
-- [ ] Рассылать админам критические Exception
-- [ ] Вынести настройки в БД, а дефолтные настройки в properties
-- [x] Переписать на xpath, если с ним можно получить значение атрибута
-- [ ] Подписка на календарь по ссылке
-- [x] Ссылки на twitch/youtube во время прямого эфира
-- [ ] Защита от отправки событий из прошлого
-- [x] Обложка стрима
-- [x] Telegram-команда /status
-- [ ] Telegram-команда для запуска проверки без ожидания cron
+- [x] Add automatic Docker image build  
+- [x] Set up MongoDB audit  
+- [x] Format date (currently just in MSK timezone)  
+- [ ] Request user timezone via the bot and use it when displaying dates. This requires generating messages individually for each user  
+- [x] Escape values when formatting messages  
+- [ ] Send critical exceptions to admins  
+- [ ] Move configuration to the database, with default values in properties  
+- [x] Rewrite using XPath if it allows attribute extraction  
+- [ ] Subscribe to calendar via link  
+- [x] Add Twitch/YouTube links during live streams  
+- [ ] Prevent sending past events  
+- [x] Add stream cover image  
+- [x] Telegram command `/status`  
+- [ ] Telegram command to trigger check manually (without waiting for cron)  
