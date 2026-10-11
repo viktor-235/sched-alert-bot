@@ -1,0 +1,39 @@
+schema: spec-driven
+
+context: |
+  Language: write ALL OpenSpec artifacts (proposal, design, specs, tasks) in English,
+  regardless of the language used in chat. Code, comments and commit messages are in English too.
+  User-facing Telegram message texts (FreeMarker templates) stay in Russian.
+
+  Domain: a Telegram bot that scrapes event schedules from websites and notifies subscribers
+  about new, changed, live, finished and canceled events. Currently the only source is
+  stopgame.ru (classes prefixed with `Sg`); the design must keep adding new sources cheap:
+  each source lives in its own package `site/<source>/` and reuses shared services
+  (web scraping, compare, template, telegram).
+
+  Constraints:
+  - The scraped site is third-party and its markup changes without notice. Scraping selectors
+    belong in configuration (application.yml), not in code.
+  - Current time must always come from the injected `java.time.Clock`, never `Instant.now()`
+    without a clock, so that behavior is testable.
+  - Telegram messages are sent with HTML parse mode; values rendered into templates must be HTML-escaped.
+  - Any MongoDB schema change (renamed/removed fields, new required fields) requires a Mongock
+    migration in `migration/` (next `V00N*`, with rollback).
+  - Single-instance deployment via Docker; no distributed locking or horizontal scaling concerns.
+
+rules:
+  proposal:
+    - Name which event statuses / Telegram users are affected by the change
+  specs:
+    - Cover edge cases of event lifecycle where relevant (new, changed, live, finished, canceled, returned after cancel)
+  tasks:
+    - Every behavior change has a test task; for processing logic, prefer integration tests with HTML fixtures in test/resources/web/<source>/ and JSON expectations
+    - Include a task to run `./gradlew test` at the end
+
+operations:
+  apply:
+    guidance:
+      - Do not commit; leave changes for review
+  archive:
+    guidance:
+      - Before archiving, make sure all tasks are checked and `./gradlew test` passes
