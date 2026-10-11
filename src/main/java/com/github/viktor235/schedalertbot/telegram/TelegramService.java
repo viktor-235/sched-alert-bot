@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -20,9 +21,11 @@ import java.util.Objects;
 public class TelegramService extends AbstractTelegramService {
 
     private static final String SEND_TEST_MESSAGE = "send_test_message";
+    private final Clock clock;
 
-    public TelegramService(TelegramUserRepository userRepository) {
+    public TelegramService(TelegramUserRepository userRepository, Clock clock) {
         super(userRepository);
+        this.clock = clock;
     }
 
     @Override
@@ -105,7 +108,7 @@ public class TelegramService extends AbstractTelegramService {
     }
 
     private void handleStatus(Command.Context ctx) {
-        String serverTime = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
+        String serverTime = LocalDateTime.now(clock).format(DateTimeFormatter.ISO_DATE_TIME);
         sendMessage(ctx.userId(), """
                 Server time:
                 %s
