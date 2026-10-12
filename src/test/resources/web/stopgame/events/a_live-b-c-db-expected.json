@@ -1,22 +1,5 @@
 [
   {
-    "id": 1452,
-    "status": "SCHEDULED",
-    "name": "Индиана. Sunless Sea",
-    "date": "2025-02-22T18:00:00Z",
-    "description": "Сходим с ума в подземном море.",
-    "participants": [
-      "Андрей Маковеев",
-      "Дмитрий Карнов"
-    ],
-    "imageUrl": "https://images.stopgame.ru/streams/2025/02/21/c583x325/ZJhwaAhQg6anG_qH2OK7Kg/VBcL5AlA.jpg",
-    "startedAt": null,
-    "endedAt": null,
-    "createdAt": "2025-02-20T00:00:00.000Z",
-    "updatedAt": "2025-02-20T00:00:00.000Z",
-    "version": 0
-  },
-  {
     "id": 1451,
     "status": "LIVE",
     "name": "Ретрореквест. Fate/Stay Night (стрим восьмой)",
@@ -28,6 +11,23 @@
     ],
     "imageUrl": "https://images.stopgame.ru/streams/2025/02/20/c583x325/vG7OuFmDyRuIUXavLuGHwg/obRQj201m.jpg",
     "startedAt": "2025-02-20T00:00:00Z",
+    "endedAt": null,
+    "createdAt": "2025-02-20T00:00:00.000Z",
+    "updatedAt": "2025-02-20T00:00:00.000Z",
+    "version": 0
+  },
+  {
+    "id": 1452,
+    "status": "SCHEDULED",
+    "name": "Индиана. Sunless Sea",
+    "date": "2025-02-22T18:00:00Z",
+    "description": "Сходим с ума в подземном море.",
+    "participants": [
+      "Андрей Маковеев",
+      "Дмитрий Карнов"
+    ],
+    "imageUrl": "https://images.stopgame.ru/streams/2025/02/21/c583x325/ZJhwaAhQg6anG_qH2OK7Kg/VBcL5AlA.jpg",
+    "startedAt": null,
     "endedAt": null,
     "createdAt": "2025-02-20T00:00:00.000Z",
     "updatedAt": "2025-02-20T00:00:00.000Z",

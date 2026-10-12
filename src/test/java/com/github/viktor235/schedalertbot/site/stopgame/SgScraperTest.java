@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +58,16 @@ class SgScraperTest {
         assertNotNull(events);
         assertEquals(expectedEvents.size(), events.size());
         assertIterableEquals(expectedEvents, events, () -> "Expected:\n" + expectedEvents + ", but was:\n" + events);
+    }
+
+    @Test
+    void parse_whenEventAIsMissing_thenReturnsOnlyEventsBAndC() throws IOException {
+        Document doc = Jsoup.parse(Path.of("src/test/resources/web/stopgame/events/b-c.html").toFile(), "UTF-8");
+        doReturn(doc).when(scraper).parseDocument(any());
+
+        List<SgEventWeb> events = sgScraper.parse();
+
+        assertEquals(List.of("1452", "1449"), events.stream().map(SgEventWeb::getId).toList());
     }
 
     @Getter

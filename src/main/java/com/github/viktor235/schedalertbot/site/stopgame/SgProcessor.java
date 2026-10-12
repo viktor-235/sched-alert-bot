@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,12 +49,22 @@ public class SgProcessor {
         }
 
         getData().stream()
+                .map(this::normalize)
                 .map(this::compare)
                 .map(this::updateStatus)
-                .filter(EventSnapshot::changed)
-                .map(this::generateMsg)
-                .map(this::sendTgMsg)
-                .forEach(this::saveChanges);
+                .map(this::decide)
+                .forEach(this::handle);
+    }
+
+    private void handle(EventSnapshot event) {
+        if (!event.shouldSave()) {
+            return;
+        }
+        // Save before sending: a failed send loses one message, a failed save would repeat it on every run
+        saveChanges(event);
+        if (event.notification() != NotificationType.NONE) {
+            sendTgMsg(event, generateMsg(event));
+        }
     }
 
     /**
@@ -70,9 +81,12 @@ public class SgProcessor {
     private List<EventSnapshot> getData() {
         // Create maps for web and database events
         Map<String, SgEventWeb> webEvents = pageParser.parse().stream()
-                .collect(Collectors.toMap(SgEventWeb::getId, Function.identity()));
+                .collect(Collectors.toMap(SgEventWeb::getId, Function.identity(), (first, duplicate) -> {
+                    log.warn("Duplicate event {} on the page, keeping the first occurrence. Ignored: {}", first.getId(), duplicate);
+                    return first;
+                }, LinkedHashMap::new));
         Map<String, SgEventEntry> dbEvents = repo.findAllByStatusIn(Set.of(EventStatus.SCHEDULED, EventStatus.LIVE)).stream()
-                .collect(Collectors.toMap(SgEventEntry::getId, Function.identity()));
+                .collect(Collectors.toMap(SgEventEntry::getId, Function.identity(), (first, duplicate) -> first, LinkedHashMap::new));
 
         // To find events which presented on site but canceled or finished in DB
         Set<String> onSiteButCanceledIds = webEvents.keySet().stream()
@@ -96,13 +110,26 @@ public class SgProcessor {
                 .toList();
     }
 
-    private EventSnapshot compare(EventSnapshot event) {
+    /**
+     * The site shows no date while an event is live. Keeps the stored date in that case,
+     * so that the missing date is neither a field change nor saved.
+     */
+    EventSnapshot normalize(EventSnapshot event) {
+        if (event.web != null && event.web.getDate() == null && event.db != null && event.db.getDate() != null) {
+            return event.withWeb(event.web.toBuilder()
+                    .date(event.db.getDate())
+                    .build());
+        }
+        return event;
+    }
+
+    EventSnapshot compare(EventSnapshot event) {
         SgEventWeb db = mapper.toWeb(event.db);
         SgEventWeb web = event.web;
         log.debug("Comparing db and web records:\n{}\n{}", db, web);
         List<FieldDiff> fieldDiffs = compareService.compare(db, web);
-        EventSnapshot newEvent = event.withDiffReport(!fieldDiffs.isEmpty(), fieldDiffs);
-        log.info("Comparison result (changed={}): {}", newEvent.changed, newEvent);
+        EventSnapshot newEvent = event.withDiffReport(fieldDiffs);
+        log.info("Comparison result: {}", newEvent);
         return newEvent;
     }
 
@@ -112,7 +139,9 @@ public class SgProcessor {
         if (event.web == null) { // Event disappeared from the site
             switch (prevStatus) {
                 case EventStatus.LIVE -> newStatus = EventStatus.FINISHED; // Event has ended
-                case EventStatus.SCHEDULED -> newStatus = EventStatus.CANCELED;  // Event was canceled before start
+                case EventStatus.SCHEDULED -> newStatus = isNotStartedYet(event.db)
+                        ? EventStatus.CANCELED // Event was canceled before start
+                        : EventStatus.FINISHED; // Event most likely aired without being seen live
                 case null -> {
                     newStatus = EventStatus.CANCELED;
                     log.warn("Event {} has no status in DB", event.db != null ? event.db.getId() : null);
@@ -123,22 +152,33 @@ public class SgProcessor {
                 }
             }
         } else { // Event exists on the site
-            if (prevStatus == EventStatus.CANCELED) { // When a canceled event returns to the site
-                log.info("Canceled event {} has returned to the site", event.db.getId());
-                newStatus = event.web.isNowLive() ? EventStatus.LIVE : EventStatus.SCHEDULED;
-            } else {
-                if (event.web.isNowLive()) {
-                    newStatus = EventStatus.LIVE;
-                } else {
-                    newStatus = EventStatus.SCHEDULED;
-                }
+            if (prevStatus == EventStatus.CANCELED || prevStatus == EventStatus.FINISHED) {
+                log.info("{} event {} has returned to the site", prevStatus, event.db.getId());
             }
+            newStatus = event.web.isNowLive() ? EventStatus.LIVE : EventStatus.SCHEDULED;
         }
         log.debug("Updating event status: {} -> {}", prevStatus, newStatus);
         return event.withNewStatus(newStatus);
     }
 
-    private EventSnapshot generateMsg(EventSnapshot event) {
+    private boolean isNotStartedYet(SgEventEntry db) {
+        return db.getDate() != null && !db.getDate().isBefore(Instant.now(clock));
+    }
+
+    EventSnapshot decide(EventSnapshot event) {
+        EventStatus prevStatus = event.db != null ? event.db.getStatus() : null;
+        // Diffs against a missing side only describe the appearing or disappearing event, not a field change
+        boolean hasFieldDiffs = event.db != null && event.web != null && !event.fieldDiffs.isEmpty();
+        boolean shouldSave = event.db == null || event.newStatus != prevStatus || hasFieldDiffs;
+        NotificationType notification = shouldSave
+                ? NotificationType.of(prevStatus, event.newStatus, hasFieldDiffs)
+                : NotificationType.NONE;
+        log.debug("Event {}: {} -> {}, save={}, notification={}",
+                event.db != null ? event.db.getId() : event.web.getId(), prevStatus, event.newStatus, shouldSave, notification);
+        return event.withDecision(shouldSave, notification);
+    }
+
+    private String generateMsg(EventSnapshot event) {
         log.debug("Generating post text for {}", event);
         Map<String, Object> ctx = new HashMap<>();
 
@@ -149,8 +189,8 @@ public class SgProcessor {
                 ));
 
         ctx.put("newEvent", event.db == null);
+        ctx.put("notification", event.notification.name());
         ctx.put("fields", Map.of(
-                "status", new TemplateField("status", false, event.db != null ? event.db.getStatus() : null, event.newStatus),
                 SgEventWeb.Fields.name, genTemplField(SgEventWeb.Fields.name, changesMap, event.web != null ? event.web.getName() : null),
                 SgEventWeb.Fields.date, genTemplField(SgEventWeb.Fields.date, changesMap, event.web != null ? event.web.getDate() : null),
                 SgEventWeb.Fields.participants, genTemplField(SgEventWeb.Fields.participants, changesMap, event.web != null ? event.web.getParticipants() : null),
@@ -158,9 +198,7 @@ public class SgProcessor {
                 SgEventWeb.Fields.imageUrl, genTemplField(SgEventWeb.Fields.imageUrl, changesMap, event.web != null ? event.web.getImageUrl() : null)
         ));
 
-        return event.withMessage(
-                msgBuildingService.buildMsg(TEMPLATE_NAME, ctx)
-        );
+        return msgBuildingService.buildMsg(TEMPLATE_NAME, ctx);
     }
 
     private TemplateField genTemplField(String fieldName, Map<String, FieldDiff> changesMap, Object val) {
@@ -173,17 +211,16 @@ public class SgProcessor {
         );
     }
 
-    private EventSnapshot sendTgMsg(EventSnapshot event) {
+    private void sendTgMsg(EventSnapshot event, String message) {
         String img = ObjectUtils.firstNonNull(
                 event.web != null ? event.web.getImageUrl() : null,
                 event.db != null ? event.db.getImageUrl() : null);
         for (TelegramUser usr : tgService.getUsers()) {
-            tgService.sendPhotoMessage(usr.getTargetChatId(), img, event.message);
+            tgService.sendPhotoMessage(usr.getTargetChatId(), img, message);
         }
-        return event;
     }
 
-    private void saveChanges(EventSnapshot event) {
+    void saveChanges(EventSnapshot event) {
         SgEventEntry result = event.db != null
                 ? event.db
                 : mapper.toEntry(event.web);
@@ -191,12 +228,13 @@ public class SgProcessor {
             mapper.updateFromWeb(event.web, result);
         }
 
-        switch (event.newStatus) {
-            case SCHEDULED -> {
-                // Nothing to do here
-            }
-            case LIVE -> result.setStartedAt(Instant.now(clock));
-            case FINISHED, CANCELED -> result.setEndedAt(Instant.now(clock));
+        EventStatus prevStatus = event.db != null ? event.db.getStatus() : null;
+        Instant now = Instant.now(clock);
+        if (prevStatus != EventStatus.LIVE && event.newStatus == EventStatus.LIVE) {
+            result.setStartedAt(now);
+            result.setEndedAt(null);
+        } else if (prevStatus == EventStatus.LIVE && event.newStatus == EventStatus.FINISHED) {
+            result.setEndedAt(now);
         }
 
         result.setStatus(event.newStatus);
@@ -206,24 +244,28 @@ public class SgProcessor {
     public record EventSnapshot(SgEventEntry db,
                                 SgEventWeb web,
                                 EventStatus newStatus,
-                                boolean changed,
                                 List<FieldDiff> fieldDiffs,
-                                String message) {
+                                boolean shouldSave,
+                                NotificationType notification) {
 
         public static EventSnapshot init(SgEventEntry db, SgEventWeb web) {
-            return new EventSnapshot(db, web, null, true, null, null);
+            return new EventSnapshot(db, web, null, List.of(), false, NotificationType.NONE);
         }
 
-        public EventSnapshot withDiffReport(boolean changed, List<FieldDiff> fieldDiffs) {
-            return new EventSnapshot(db, web, newStatus, changed, fieldDiffs, message);
+        public EventSnapshot withWeb(SgEventWeb web) {
+            return new EventSnapshot(db, web, newStatus, fieldDiffs, shouldSave, notification);
         }
 
-        public EventSnapshot withMessage(String msg) {
-            return new EventSnapshot(db, web, newStatus, changed, fieldDiffs, msg);
+        public EventSnapshot withDiffReport(List<FieldDiff> fieldDiffs) {
+            return new EventSnapshot(db, web, newStatus, fieldDiffs, shouldSave, notification);
         }
 
         public EventSnapshot withNewStatus(EventStatus status) {
-            return new EventSnapshot(db, web, status, changed, fieldDiffs, message);
+            return new EventSnapshot(db, web, status, fieldDiffs, shouldSave, notification);
+        }
+
+        public EventSnapshot withDecision(boolean shouldSave, NotificationType notification) {
+            return new EventSnapshot(db, web, newStatus, fieldDiffs, shouldSave, notification);
         }
     }
 }
