@@ -49,6 +49,7 @@ Out of scope (separate changes):
 - HTML-escaping of scraped values in templates
 - time zone shown by the `/status` command
 - per-source user subscriptions
+- detecting changes in list fields (`participants`): a participants-only change is neither saved nor notified, and the cancellation card omits participants. `CompareService` keeps only Javers `ValueChange`, and lists produce `ListChange`. Planned as change `detect-list-field-changes`.
 
 ## Capabilities
 

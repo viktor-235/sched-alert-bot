@@ -21,6 +21,7 @@ The current `SgProcessor.process()` is one stream: `compare → updateStatus →
 - Extracting a shared, source-agnostic processor base class. The rules stay in `SgProcessor` until a second source exists. Only the pure decision logic is kept free of `Sg` types where that costs nothing.
 - Telling broken markup from an empty page (change `guard-against-broken-scraping`).
 - HTML-escaping scraped values (out of scope per proposal).
+- Detecting list field changes in `CompareService` (change `detect-list-field-changes`).
 
 ## Decisions
 
@@ -115,6 +116,7 @@ The `null` status branch in `updateStatus` (logged as a warning, treated as CANC
 - [Rollback of V003 is lossy for legacy live records] → Documented in decision 7. Production holds `v1.1.0` data only, so only records that were live at upgrade time are affected.
 - [Template layout keyed by notification type instead of status] → Every existing message fixture is regenerated or checked against the new rendering. Header texts, except the new 🔁, must match the existing fixtures byte for byte, which the integration tests enforce.
 - [First run after deploy sends late "❌" for stale scheduled events and a repeated "🔴" for a stream live at deploy time] → Accepted in the proposal. The migration already turns past-dated legacy events into FINISHED, so a late "❌" is sent only for a future-dated event that is missing from the site, which is a real cancellation.
+- [Participants-only changes are lost; the cancellation card has no participants] → Accepted for this change, pre-existing behavior; fixed separately in `detect-list-field-changes`.
 
 ## Migration Plan
 

@@ -67,7 +67,7 @@ A SCHEDULED event that becomes CANCELED SHALL notify with "❌ Отмена со
 
 #### Scenario: Scheduled event canceled
 - **WHEN** a SCHEDULED event becomes CANCELED
-- **THEN** subscribers receive "❌ Отмена события" with the stored name, date, participants and description
+- **THEN** subscribers receive "❌ Отмена события" with the stored name, date and description
 
 ### Requirement: Return notification
 A CANCELED or FINISHED event that is on the site again and not live SHALL notify with "🔁 Снова в расписании" and the card with diff, even if no field changed.
@@ -118,7 +118,7 @@ A card SHALL list the event name, date, participants and description, omitting a
 - **THEN** the card has no participants line
 
 ### Requirement: Diff rendering
-In a card with diff, each changed field SHALL be shown as old value → new value, except that an old non-empty description is shortened to "..."; unchanged fields are shown with their current value. An empty side of a change SHALL be shown as italic "пусто" using valid Telegram HTML (`<i>пусто</i>`). The message SHALL NOT contain the literal text `<пусто>`.
+In a card with diff, each changed field SHALL be shown as old value → new value, except that an old non-empty description is shortened to "..."; unchanged fields are shown with their current value. An empty side of a change SHALL be shown as italic "пусто" using valid Telegram HTML (`<i>пусто</i>`). The message SHALL NOT contain the literal text `<пусто>`. Changes in list fields (participants) are not detected in this change, so they are not shown as old → new.
 
 #### Scenario: Description added
 - **WHEN** an event had no description and now has "Описание стрима"
@@ -127,7 +127,3 @@ In a card with diff, each changed field SHALL be shown as old value → new valu
 #### Scenario: Description removed
 - **WHEN** an event had description "Описание стрима" and now has none
 - **THEN** the message contains `ℹ️ ... → <i>пусто</i>`
-
-#### Scenario: Participants removed
-- **WHEN** an event's participants list changes from two names to empty
-- **THEN** the message shows the old names followed by ` → <i>пусто</i>`

@@ -79,7 +79,7 @@ A CANCELED or FINISHED event that is not on the site SHALL keep its status and S
 - **THEN** it stays FINISHED and is not saved
 
 ### Requirement: Save only on real change
-An event SHALL be saved when its status changes or at least one of its fields changes, including when the status changes and no field does. An event whose status and fields are both unchanged SHALL NOT be saved.
+An event SHALL be saved when its status changes or at least one of its fields changes, including when the status changes and no field does. An event whose status and fields are both unchanged SHALL NOT be saved. A change in participants alone is not detected as a field change and does not cause a save; detecting list field changes is out of scope of this change.
 
 #### Scenario: Status changes, fields do not
 - **WHEN** a SCHEDULED event goes live and none of its fields changed
