@@ -15,5 +15,7 @@ public abstract class AbstractIntegrationTest {
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
+        registry.add("telegram.bot.token", () -> "test-token");
+        registry.add("telegram.bot.username", () -> "test_bot");
     }
 }

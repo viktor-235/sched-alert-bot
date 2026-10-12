@@ -1,5 +1,6 @@
 package com.github.viktor235.schedalertbot.compare;
 
+import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventWeb;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -81,6 +82,20 @@ class CompareServiceTest {
 
         // Assert
         System.out.println(fieldDiffs);
+        assertEquals(0, fieldDiffs.size());
+    }
+
+    @Test
+    void compare_whenEventsDifferOnlyInNowLive_thenEmptyDiff() {
+        // Arrange
+        CompareService compareService = new CompareService();
+        SgEventWeb scheduled = SgEventWeb.builder().id("1").name("Stream").nowLive(false).build();
+        SgEventWeb live = scheduled.toBuilder().nowLive(true).build();
+
+        // Act
+        List<FieldDiff> fieldDiffs = compareService.compare(scheduled, live);
+
+        // Assert
         assertEquals(0, fieldDiffs.size());
     }
 }
