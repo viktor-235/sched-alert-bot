@@ -4,6 +4,39 @@
 
 Defines which event lifecycle transitions notify Telegram subscribers, and the header and content of each notification, so that subscribers learn about new, changed, live, canceled and returning events exactly once and are not told about events that ended normally.
 
+## Overview
+
+Informative map of the notification sent on each status transition defined in `event-lifecycle`; the requirements and scenarios below are normative. "always" means even if no field changed; "if changed" means only if at least one field changed; "silent" means no notification.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+
+    [*] --> SCHEDULED: 🆕 Новое событие
+    [*] --> LIVE: 🔴 В эфире
+
+    SCHEDULED --> LIVE: 🔴 always
+    LIVE --> SCHEDULED: 🆙 if changed
+
+    SCHEDULED --> CANCELED: ❌ Отмена события
+    SCHEDULED --> FINISHED: silent
+    LIVE --> FINISHED: silent
+
+    CANCELED --> SCHEDULED: 🔁 always
+    CANCELED --> LIVE: 🔴 always
+    FINISHED --> SCHEDULED: 🔁 always
+    FINISHED --> LIVE: 🔴 always
+
+    note right of FINISHED
+        same status after the run:
+        SCHEDULED → 🆙 if changed
+        LIVE → 🔴 if changed
+        CANCELED / FINISHED → silent
+    end note
+```
+
+Not shown: nothing is sent when status and fields are unchanged; at most one notification per event per run; every notification goes to every registered user.
+
 ## Requirements
 
 ### Requirement: Recipients
