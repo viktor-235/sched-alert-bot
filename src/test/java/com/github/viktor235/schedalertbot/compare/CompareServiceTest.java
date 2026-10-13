@@ -98,4 +98,54 @@ class CompareServiceTest {
         // Assert
         assertEquals(0, fieldDiffs.size());
     }
+
+    @Test
+    void compare_whenListElementChanged_thenListDiff() {
+        // Arrange
+        CompareService compareService = new CompareService();
+        SgEventWeb before = SgEventWeb.builder().id("1").participants(List.of("A", "B")).build();
+        SgEventWeb after = before.toBuilder().participants(List.of("A", "C")).build();
+
+        // Act
+        List<FieldDiff> fieldDiffs = compareService.compare(before, after);
+
+        // Assert
+        assertEquals(1, fieldDiffs.size());
+        FieldDiff fieldDiff = fieldDiffs.getFirst();
+        assertEquals("participants", fieldDiff.getName());
+        assertEquals(List.of("A", "B"), fieldDiff.getOldValue());
+        assertEquals(List.of("A", "C"), fieldDiff.getNewValue());
+    }
+
+    @Test
+    void compare_whenListCleared_thenListDiff() {
+        // Arrange
+        CompareService compareService = new CompareService();
+        SgEventWeb before = SgEventWeb.builder().id("1").participants(List.of("A", "B")).build();
+        SgEventWeb after = before.toBuilder().participants(List.of()).build();
+
+        // Act
+        List<FieldDiff> fieldDiffs = compareService.compare(before, after);
+
+        // Assert
+        assertEquals(1, fieldDiffs.size());
+        FieldDiff fieldDiff = fieldDiffs.getFirst();
+        assertEquals("participants", fieldDiff.getName());
+        assertEquals(List.of("A", "B"), fieldDiff.getOldValue());
+        assertEquals(List.of(), fieldDiff.getNewValue());
+    }
+
+    @Test
+    void compare_whenNullAndEmptyList_thenEmptyDiff() {
+        // Arrange
+        CompareService compareService = new CompareService();
+        SgEventWeb stored = SgEventWeb.builder().id("1").participants(null).build();
+        SgEventWeb scraped = stored.toBuilder().participants(List.of()).build();
+
+        // Act
+        List<FieldDiff> fieldDiffs = compareService.compare(stored, scraped);
+
+        // Assert
+        assertEquals(0, fieldDiffs.size());
+    }
 }

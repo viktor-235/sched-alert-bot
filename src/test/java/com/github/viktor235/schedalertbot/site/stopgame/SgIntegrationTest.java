@@ -257,6 +257,12 @@ class SgIntegrationTest extends AbstractIntegrationTest {
                 "src/test/resources/web/stopgame/events/a-b_new_date-c_new_desc.html",
                 "src/test/resources/web/stopgame/events/a-b_new_date-c_new_desc-db-expected.json",
                 "src/test/resources/web/stopgame/events/b_new_date-c_new_desc-msg.json"),
+        PARTICIPANTS_CHANGED(
+                "An event in the database is on the site and only its participants changed. The database should be updated and an update message with the participants change sent",
+                "src/test/resources/web/stopgame/events/a-b_old_participants-c-seed.json",
+                "src/test/resources/web/stopgame/events/a-b-c.html",
+                "src/test/resources/web/stopgame/events/a-b_old_participants-c-db-expected.json",
+                "src/test/resources/web/stopgame/events/b_old_participants-msg.json"),
         B_FINISHED(
                 "A LIVE event disappears from the site. It should become FINISHED with its date kept and endedAt set, and no message should be sent",
                 "src/test/resources/web/stopgame/events/a_live-b-c-seed.json",

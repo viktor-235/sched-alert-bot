@@ -215,6 +215,53 @@ class SgProcessorTest {
     }
 
     @Test
+    void process_whenScheduledEventParticipantsChanged_thenSavedAndNotifiedWithUpdate() {
+        givenDb(createDbEvent(EventStatus.SCHEDULED));
+        SgEventWeb web = createWebEvent(false);
+        web.setParticipants(List.of("Participant 1", "Participant 2"));
+        givenSite(web);
+
+        processor.process();
+
+        SgEventEntry saved = capturedSave();
+        assertThat(saved.getStatus()).isEqualTo(EventStatus.SCHEDULED);
+        assertThat(saved.getParticipants()).containsExactly("Participant 1", "Participant 2");
+        assertThat(capturedNotification()).isEqualTo(NotificationType.UPDATE.name());
+        verify(tgService).sendPhotoMessage(any(), any(), any());
+    }
+
+    @Test
+    void process_whenLiveEventParticipantsChanged_thenSavedAndNotifiedWithLive() {
+        givenDb(createDbEvent(EventStatus.LIVE));
+        SgEventWeb web = createWebEvent(true);
+        web.setParticipants(List.of("Participant 2"));
+        givenSite(web);
+
+        processor.process();
+
+        SgEventEntry saved = capturedSave();
+        assertThat(saved.getStatus()).isEqualTo(EventStatus.LIVE);
+        assertThat(saved.getParticipants()).containsExactly("Participant 2");
+        assertThat(capturedNotification()).isEqualTo(NotificationType.LIVE.name());
+        verify(tgService).sendPhotoMessage(any(), any(), any());
+    }
+
+    @Test
+    void process_whenStoredParticipantsMissingAndSiteShowsNone_thenNotSavedAndNotNotified() {
+        SgEventEntry db = createDbEvent(EventStatus.SCHEDULED);
+        db.setParticipants(null);
+        givenDb(db);
+        SgEventWeb web = createWebEvent(false);
+        web.setParticipants(List.of());
+        givenSite(web);
+
+        processor.process();
+
+        verify(repo, never()).save(any());
+        verify(tgService, never()).sendPhotoMessage(any(), any(), any());
+    }
+
+    @Test
     void process_whenSaveFails_thenNothingIsSent() {
         givenDb(createDbEvent(EventStatus.SCHEDULED));
         givenSite(createWebEvent(true));
