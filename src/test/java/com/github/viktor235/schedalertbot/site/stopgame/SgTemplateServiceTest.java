@@ -241,4 +241,50 @@ class SgTemplateServiceTest {
                         """)
                 .doesNotContain("<пусто>");
     }
+
+    @Test
+    void buildMsg_whenParticipantsAdded_thenShowEmptyMarkerForOldList() {
+        String templateName = SgProcessor.TEMPLATE_NAME;
+        Map<String, Object> ctx = new HashMap<>();
+        ctx.put("newEvent", false);
+        ctx.put("notification", NotificationType.UPDATE.name());
+        ctx.put("fields", Map.of(
+                SgEventWeb.Fields.name, new TemplateField(SgEventWeb.Fields.name, false, null, "Name"),
+                SgEventWeb.Fields.description, new TemplateField(SgEventWeb.Fields.description, false, null, null),
+                SgEventWeb.Fields.date, new TemplateField(SgEventWeb.Fields.date, false, null, null),
+                SgEventWeb.Fields.participants, new TemplateField(SgEventWeb.Fields.participants, true, emptyList(), List.of("Андрей Маковеев")),
+                SgEventWeb.Fields.imageUrl, new TemplateField(SgEventWeb.Fields.imageUrl, false, null, null)
+        ));
+
+        String result = templateService.buildMsg(templateName, ctx);
+
+        assertThat(result).isEqualTo("""
+                🆙 Обновление события
+                🎦 Name
+                🧑‍🧒‍🧒 <i>пусто</i> → Андрей Маковеев
+                """);
+    }
+
+    @Test
+    void buildMsg_whenParticipantsRemoved_thenShowEmptyMarkerForNewList() {
+        String templateName = SgProcessor.TEMPLATE_NAME;
+        Map<String, Object> ctx = new HashMap<>();
+        ctx.put("newEvent", false);
+        ctx.put("notification", NotificationType.UPDATE.name());
+        ctx.put("fields", Map.of(
+                SgEventWeb.Fields.name, new TemplateField(SgEventWeb.Fields.name, false, null, "Name"),
+                SgEventWeb.Fields.description, new TemplateField(SgEventWeb.Fields.description, false, null, null),
+                SgEventWeb.Fields.date, new TemplateField(SgEventWeb.Fields.date, false, null, null),
+                SgEventWeb.Fields.participants, new TemplateField(SgEventWeb.Fields.participants, true, List.of("Андрей Маковеев", "Дмитрий Карнов"), emptyList()),
+                SgEventWeb.Fields.imageUrl, new TemplateField(SgEventWeb.Fields.imageUrl, false, null, null)
+        ));
+
+        String result = templateService.buildMsg(templateName, ctx);
+
+        assertThat(result).isEqualTo("""
+                🆙 Обновление события
+                🎦 Name
+                🧑‍🧒‍🧒 Андрей Маковеев, Дмитрий Карнов → <i>пусто</i>
+                """);
+    }
 }

@@ -82,7 +82,12 @@
         <#return result + field.oldValue?join(", ") + "\n" />
     </#if>
     <#if field.changed && !newEvent>
-        <#assign result += (field.oldValue?join(", ")! EMPTY) +  " → " />
+        <#if field.oldValue?? && field.oldValue?has_content>
+            <#assign result += field.oldValue?join(", ") />
+        <#else>
+            <#assign result += EMPTY />
+        </#if>
+        <#assign result += " → " />
         <#if !field.newValue?? || (!field.newValue?has_content)>
             <#assign result += EMPTY />
         </#if>
