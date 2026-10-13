@@ -4,6 +4,42 @@
 
 Defines how a scraped event's status, scheduled date and stream timing are derived from what the scraper observes on each run and how they are stored, so that the stored state is stable across runs and archived events stay queryable.
 
+## Overview
+
+Informative map of the status transitions defined by the requirements below; the requirements and scenarios are normative.
+
+```mermaid
+stateDiagram-v2
+    direction LR
+
+    [*] --> SCHEDULED: new, on site, not live
+    [*] --> LIVE: new, on site, live
+
+    SCHEDULED --> LIVE: on site, live
+    LIVE --> SCHEDULED: on site, not live
+
+    LIVE --> FINISHED: gone
+    SCHEDULED --> CANCELED: gone, date ≥ now
+    SCHEDULED --> FINISHED: gone, date < now or empty
+
+    CANCELED --> SCHEDULED: back, not live
+    CANCELED --> LIVE: back, live
+    FINISHED --> SCHEDULED: back, not live
+    FINISHED --> LIVE: back, live
+
+    note right of LIVE
+        on entry: startedAt = now, endedAt = ∅
+        on exit to FINISHED: endedAt = now
+    end note
+
+    note right of CANCELED
+        CANCELED / FINISHED while gone:
+        status kept, not saved
+    end note
+```
+
+Not shown: a transition, or a field change without one, causes a save; no change means no save. The stored `date` is never cleared by a transition and is not overwritten by an empty date from the site.
+
 ## Requirements
 
 ### Requirement: Status derived from site observation

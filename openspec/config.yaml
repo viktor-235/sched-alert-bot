@@ -28,6 +28,7 @@ rules:
     - Cover edge cases of event lifecycle where relevant (new, changed, live, finished, canceled, returned after cancel)
   tasks:
     - Every behavior change has a test task; for processing logic, prefer integration tests with HTML fixtures in test/resources/web/<source>/ and JSON expectations
+    - If the change alters event status transitions or which notification a transition sends, include a task to update the Mermaid diagram in the `## Overview` section of the affected every main spec after the specs are synced
     - Include a task to run `./gradlew test` at the end
 
 operations:
@@ -37,3 +38,4 @@ operations:
   archive:
     guidance:
       - Before archiving, make sure all tasks are checked and `./gradlew test` passes
+      - After syncing specs, update the Mermaid diagram in the `## Overview` section of every main spec the change touched so it matches the requirements (transitions, conditions, notifications); keep it marked informative, the requirements stay normative
