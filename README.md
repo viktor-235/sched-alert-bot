@@ -20,6 +20,8 @@ Make sure you have configured the MongoDB connection and Telegram API credential
 ## Development
 The entry point is a scheduler class, e.g., `SgScheduler`.
 
+Workflow from task to release, commit and PR conventions: [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## TODO
 - [x] Add automatic Docker image build
 - [x] Set up MongoDB audit
