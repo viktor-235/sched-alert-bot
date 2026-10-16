@@ -129,7 +129,7 @@ public class SgProcessor {
         log.debug("Comparing db and web records:\n{}\n{}", db, web);
         List<FieldDiff> fieldDiffs = compareService.compare(db, web);
         EventSnapshot newEvent = event.withDiffReport(fieldDiffs);
-        log.info("Comparison result: {}", newEvent);
+        log.debug("Comparison result: {}", newEvent);
         return newEvent;
     }
 
@@ -173,8 +173,12 @@ public class SgProcessor {
         NotificationType notification = shouldSave
                 ? NotificationType.of(prevStatus, event.newStatus, hasFieldDiffs)
                 : NotificationType.NONE;
-        log.debug("Event {}: {} -> {}, save={}, notification={}",
-                event.db != null ? event.db.getId() : event.web.getId(), prevStatus, event.newStatus, shouldSave, notification);
+        log.info("Event {} '{}': {} -> {}, changed={}, save={}, notification={}",
+                event.db != null ? event.db.getId() : event.web.getId(),
+                event.web != null ? event.web.getName() : event.db.getName(),
+                prevStatus, event.newStatus,
+                hasFieldDiffs ? event.fieldDiffs.stream().map(FieldDiff::getName).toList() : List.of(),
+                shouldSave, notification);
         return event.withDecision(shouldSave, notification);
     }
 

@@ -1,6 +1,7 @@
 package com.github.viktor235.schedalertbot.compare;
 
 import lombok.extern.slf4j.Slf4j;
+import org.javers.core.Javers;
 import org.javers.core.JaversBuilder;
 import org.javers.core.diff.Diff;
 import org.javers.core.diff.changetype.PropertyChange;
@@ -12,9 +13,10 @@ import java.util.List;
 @Slf4j
 public class CompareService {
 
+    private final Javers javers = JaversBuilder.javers().build();
+
     public List<FieldDiff> compare(Object o1, Object o2) {
-        Diff diff = JaversBuilder.javers().build()
-                .compare(o1, o2);
+        Diff diff = javers.compare(o1, o2);
         log.debug(diff.prettyPrint());
         // Covers value and container (list, set, map) changes; for containers left/right are the whole old/new values.
         // Nested object fields (ReferenceChange) are not expected: compared models hold only values and lists,

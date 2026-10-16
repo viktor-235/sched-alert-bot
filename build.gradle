@@ -72,4 +72,6 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    // Keep test runs out of the application log files in logs/
+    systemProperty 'logging.file.name', ''
 }

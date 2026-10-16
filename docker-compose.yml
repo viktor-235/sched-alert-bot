@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   #  app:
   #    image: ghcr.io/viktor-235/sched-alert-bot:latest
@@ -9,6 +7,9 @@ services:
   #    env_file: "./.env"
   #    environment:
   #      - MONGODB_URI=mongodb://mongo:27017/sched_alert_bot
+  #      - TZ=Europe/Amsterdam
+  #    volumes:
+  #      - ./logs:/app/logs
   #    depends_on:
   #      - mongo
   #      - prometheus
@@ -23,6 +24,9 @@ services:
     env_file: "./.env"
     environment:
       - MONGODB_URI=mongodb://sched-alert-bot-mongodb:27017/sched_alert_bot
+      - TZ=Europe/Amsterdam
+    volumes:
+      - ./logs:/app/logs
     depends_on:
       - mongodb
       - prometheus

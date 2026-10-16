@@ -43,3 +43,6 @@ out/
 .codex/
 .claude/worktrees/
 .claude/settings.local.json
+
+### Logs ###
+logs/

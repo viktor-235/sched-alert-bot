@@ -15,7 +15,14 @@ telegram:
     username: ${BOT_NAME}
 logging:
   level:
-    com.github.viktor235.schedalertbot: DEBUG
+    com.github.viktor235.schedalertbot: INFO
+    org.javers: WARN
+  file:
+    name: logs/sched-alert-bot.log
+  logback:
+    rollingpolicy:
+      file-name-pattern: logs/sched-alert-bot-%d{yyyy-MM-dd}.%i.log
+      max-history: 7
 management:
   endpoints:
     web:
