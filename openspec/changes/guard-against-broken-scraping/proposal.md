@@ -24,7 +24,7 @@ When stopgame.ru changes its markup, the scraper does not fail. It returns wrong
 
 - The placeholder text and markup are stable enough to serve as a structural marker. If the placeholder breaks while the schedule is really empty, the only cost is a skipped run with nothing to process. That failure mode is safe.
 - The placeholder is checked only when zero events are found, so a change to its markup has no effect while events are present.
-- An aborted run is retried by the next cron tick (`0 1/10 * * * *`); no additional retry logic is needed.
+- An aborted run is retried by the next cron tick (`0 * * * * *`); no additional retry logic is needed.
 - A fetch failure already throws `ScraperException` (`XpathScraper.parsePage`); this change handles pages that load but parse to wrong data.
 - This is not a regression introduced by `fix-event-lifecycle-notifications`, since production behaves the same today. It does not block `v1.2.0`, but the new CANCELED / FINISHED rules make a broken page more visible.
 
