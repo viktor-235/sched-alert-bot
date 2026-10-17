@@ -29,6 +29,7 @@ Workflow from task to release, commit and PR conventions: [CONTRIBUTING.md](CONT
 - [ ] Request user timezone via the bot and use it when displaying dates. This requires generating messages individually for each user
 - [x] Escape values when formatting messages
 - [ ] Send critical exceptions to admins
+- [ ] Retry page fetch on transient network errors (e.g. connect timeout), so a single failure does not trigger an admin alert
 - [ ] Move configuration to the database, with default values in properties
 - [x] Rewrite using XPath if it allows attribute extraction
 - [ ] Subscribe to calendar via link
