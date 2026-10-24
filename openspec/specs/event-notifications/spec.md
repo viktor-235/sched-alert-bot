@@ -35,20 +35,35 @@ stateDiagram-v2
     end note
 ```
 
-Not shown: nothing is sent when status and fields are unchanged; at most one notification per event per run; every notification goes to every registered user.
+Not shown: nothing is sent when status and fields are unchanged; at most one notification per event per run; every notification goes to every registered user, and nothing is sent without a bot token.
 
 ## Requirements
 
 ### Requirement: Recipients
-Every notification SHALL be sent to every registered Telegram user, as a photo message with the event image. If no user is registered, processing SHALL be skipped and nothing is saved or sent.
+Every notification SHALL be sent to every registered Telegram user, as a photo message with the event image. If no user is registered, processing SHALL still run and save events as usual, and nothing is sent. A user who registers later SHALL NOT be notified about events already stored.
 
 #### Scenario: Several users
 - **WHEN** two users are registered and one event produces a notification
 - **THEN** each user receives that notification once
 
 #### Scenario: No users
-- **WHEN** no user is registered
-- **THEN** the run saves nothing and sends nothing
+- **WHEN** no user is registered and a new event appears on the site
+- **THEN** the run saves the event and sends nothing
+
+#### Scenario: User registers after events were stored
+- **WHEN** an event was saved while no user was registered, a user then registers, and the event is unchanged on the next run
+- **THEN** the user receives no notification for it
+
+### Requirement: Telegram is optional
+The application SHALL start and process events without Telegram credentials. With no bot token configured, the bot SHALL NOT be registered and no message SHALL be sent, while scraping, saving and the calendar export work as usual. The application SHALL log a warning at startup that Telegram is disabled.
+
+#### Scenario: No bot token
+- **WHEN** the application starts without a bot token and a new event appears on the site
+- **THEN** the event is saved, the calendar file is updated if export is enabled, and no Telegram message is sent
+
+#### Scenario: Registered users without a bot token
+- **WHEN** users are registered but no bot token is configured and an event produces a notification
+- **THEN** no Telegram message is sent and no sending error is logged
 
 ### Requirement: New event notification
 A new event SHALL notify with the full card: "🆕 Новое событие" if it is not live, "🔴 В эфире" if it is live.

@@ -4,12 +4,15 @@ services:
   #    container_name: sched-alert-bot
   #    ports:
   #      - "8080:8080"
-  #    env_file: "./.env"
+  #    env_file:
+  #      - path: ./.env
+  #        required: false
   #    environment:
   #      - MONGODB_URI=mongodb://mongo:27017/sched_alert_bot
   #      - TZ=Europe/Amsterdam
   #    volumes:
   #      - ./logs:/app/logs
+  #      - ./ics:/app/ics
   #    depends_on:
   #      - mongo
   #      - prometheus
@@ -21,12 +24,15 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
-    env_file: "./.env"
+    env_file:
+      - path: ./.env
+        required: false
     environment:
       - MONGODB_URI=mongodb://sched-alert-bot-mongodb:27017/sched_alert_bot
       - TZ=Europe/Amsterdam
     volumes:
       - ./logs:/app/logs
+      - ./ics:/app/ics
     depends_on:
       - mongodb
       - prometheus

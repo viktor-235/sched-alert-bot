@@ -1,0 +1,27 @@
+BEGIN:VCALENDAR
+PRODID:-//viktor-235//sched-alert-bot//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:1451@stopgame.sched-alert-bot
+DTSTAMP:20250220T100000Z
+LAST-MODIFIED:20250220T100000Z
+SEQUENCE:3
+DTSTART:20250221T150000Z
+DTEND:20250221T170000Z
+SUMMARY:Ретрореквест. Fate/Stay Night\; стрим восьмой\, финал \\ эпилог
+DESCRIPTION:Традиционное пятничное погружение в историю Святого грааля и 
+ Битвы семи магов\, с длинным описанием.\n\nЯн Грибович\, Иван Лоев
+URL:https://www.twitch.tv/stopgameru
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://images.stopgame.ru/streams/2025/02/
+ 20/c583x325/vG7OuFmDyRuIUXavLuGHwg/obRQj201m.jpg
+END:VEVENT
+BEGIN:VEVENT
+UID:1452@stopgame.sched-alert-bot
+DTSTAMP:20250220T100000Z
+LAST-MODIFIED:20250220T100000Z
+SEQUENCE:0
+DTSTART:20250222T180000Z
+SUMMARY:Индиана. Sunless Sea
+END:VEVENT
+END:VCALENDAR

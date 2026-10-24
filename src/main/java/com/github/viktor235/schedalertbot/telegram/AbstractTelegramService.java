@@ -6,6 +6,7 @@ import com.github.viktor235.schedalertbot.telegram.config.Command;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
@@ -36,6 +37,13 @@ public abstract class AbstractTelegramService extends TelegramLongPollingBot {
     protected String botUsername;
 
     protected final TelegramUserRepository userRepository;
+
+    /**
+     * Telegram is optional: without a token the bot is not registered and nothing is sent
+     */
+    public boolean isEnabled() {
+        return StringUtils.isNotBlank(botToken);
+    }
 
     @Override
     public String getBotUsername() {
@@ -127,6 +135,10 @@ public abstract class AbstractTelegramService extends TelegramLongPollingBot {
     }
 
     public void sendMessage(String chatId, String message, ReplyKeyboard replyKeyboard) {
+        if (!isEnabled()) {
+            log.debug("Telegram is disabled, message to {} not sent", chatId);
+            return;
+        }
         SendMessage msg = new SendMessage();
         msg.setParseMode(config.getParseMode());
         msg.setChatId(chatId);
@@ -145,6 +157,10 @@ public abstract class AbstractTelegramService extends TelegramLongPollingBot {
     }
 
     public void sendPhotoMessage(String chatId, String imageUrl, String caption, ReplyKeyboard replyKeyboard) {
+        if (!isEnabled()) {
+            log.debug("Telegram is disabled, photo message to {} not sent", chatId);
+            return;
+        }
         if (isEmpty(imageUrl)) {
             sendMessage(chatId, caption, replyKeyboard);
             return;

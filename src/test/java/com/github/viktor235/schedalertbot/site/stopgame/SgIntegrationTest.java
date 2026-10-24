@@ -2,6 +2,7 @@ package com.github.viktor235.schedalertbot.site.stopgame;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.viktor235.schedalertbot.AbstractIntegrationTest;
+import com.github.viktor235.schedalertbot.calendar.CalendarExporter;
 import com.github.viktor235.schedalertbot.site.stopgame.model.EventStatus;
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventEntry;
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventRepository;
@@ -25,14 +26,22 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -57,11 +66,22 @@ class SgIntegrationTest extends AbstractIntegrationTest {
     private ObjectMapper mapper;
     @Autowired
     private MongoTemplate mongoTemplate;
+    @SpyBean
+    private CalendarExporter calendarExporter;
 
     private static final Instant NOW = Instant.parse("2025-02-20T00:00:00.000Z");
     private static final MutableClock CLOCK = new MutableClock(NOW);
     private static final String EVENTS_DIR = "src/test/resources/web/stopgame/events/";
     private static final String EVENT_A_ID = "1451";
+    private static final String EVENT_B_ID = "1452";
+    private static final String EVENT_C_ID = "1449";
+    private static final Path ICS_FILE = createTempDir().resolve("stopgame.ics");
+
+    @DynamicPropertySource
+    static void icsProperties(DynamicPropertyRegistry registry) {
+        registry.add("site.stopgame.ics.enabled", () -> "true");
+        registry.add("site.stopgame.ics.path", ICS_FILE::toString);
+    }
 
     @TestConfiguration
     static class FixedClockConfig {
@@ -76,12 +96,13 @@ class SgIntegrationTest extends AbstractIntegrationTest {
         CLOCK.set(NOW);
         repo.deleteAll();
         userRepo.deleteAll();
-        reset(telegramService);
+        reset(telegramService, calendarExporter);
 
         registerUser(TEST_USER_ID, TEST_USERNAME);
 
         doNothing().when(telegramService).sendPhotoMessage(any(), any(), any());
         doNothing().when(telegramService).sendMessage(any(), any(), any());
+        deleteCalendar();
     }
 
     @ParameterizedTest(name = "{0}")
@@ -176,6 +197,210 @@ class SgIntegrationTest extends AbstractIntegrationTest {
         }
     }
 
+    @Test
+    void testRunWithoutUsersSavesEventsAndSendsNothing() throws IOException {
+        userRepo.deleteAll();
+        givenPage(EVENTS_DIR + "a-b-c.html");
+
+        processor.process();
+
+        List<SgEventEntry> expectedEvents = TestUtils.readJsonListFile(EVENTS_DIR + "a-b-c-db-expected.json", mapper, SgEventEntry.class);
+        JsonAssertions.assertThatJson(repo.findAll())
+                .ignoringFields("createdAt", "updatedAt")
+                .isEqualToJson(expectedEvents);
+        assertThat(sentMessages()).isEmpty();
+    }
+
+    @Test
+    void testUserRegisteredLaterIsNotNotifiedAboutStoredEvents() throws IOException {
+        userRepo.deleteAll();
+        givenPage(EVENTS_DIR + "a-b-c.html");
+        processor.process();
+
+        registerUser(TEST_USER_ID, TEST_USERNAME);
+        CLOCK.set(NOW.plus(Duration.ofMinutes(1)));
+        processor.process();
+
+        assertThat(repo.findAll()).hasSize(3);
+        assertThat(sentMessages()).isEmpty();
+    }
+
+    // Calendar export
+
+    @Test
+    void testCalendarWrittenAfterSaveWithAllStoredEvents() throws IOException {
+        seed(EVENTS_DIR + "a-b-c-seed.json");
+        Files.writeString(ICS_FILE, "old content");
+        // Only b and c change
+        givenPage(EVENTS_DIR + "a-b_new_date-c_new_desc.html");
+
+        processor.process();
+
+        assertThat(calendarUids()).containsExactlyInAnyOrder(EVENT_A_ID, EVENT_B_ID, EVENT_C_ID);
+        // SEQUENCE follows the stored version: changed events are bumped, the unchanged one is not
+        assertThat(calendarEntry(EVENT_A_ID)).contains("SEQUENCE:0\r\n");
+        assertThat(calendarEntry(EVENT_B_ID)).contains("SEQUENCE:1\r\n");
+        assertThat(calendarEntry(EVENT_C_ID)).contains("SEQUENCE:1\r\n");
+    }
+
+    @Test
+    void testCalendarUntouchedWhenNothingSaved() throws IOException {
+        seed(EVENTS_DIR + "a_live-b-c-seed.json");
+        Files.writeString(ICS_FILE, "old content");
+        givenPage(EVENTS_DIR + "a_live-b-c.html");
+
+        processor.process();
+
+        assertThat(ICS_FILE).hasContent("old content");
+    }
+
+    @Test
+    void testCalendarWrittenWhenMissingAndNothingSaved() throws IOException {
+        seed(EVENTS_DIR + "a_live-b-c-seed.json");
+        givenPage(EVENTS_DIR + "a_live-b-c.html");
+
+        processor.process();
+
+        assertThat(repo.findAll()).extracting(SgEventEntry::getVersion).containsOnly(0L);
+        assertThat(calendarUids()).containsExactlyInAnyOrder(EVENT_A_ID, EVENT_B_ID, EVENT_C_ID);
+    }
+
+    @Test
+    void testLiveEventKeepsCalendarByteIdentical() throws IOException {
+        seed(EVENTS_DIR + "a-b-c-seed.json");
+        givenPage(EVENTS_DIR + "a_live-b-c.html");
+        processor.process();
+        byte[] first = Files.readAllBytes(ICS_FILE);
+        // Live, but still at the scheduled time
+        assertThat(calendarEntry(EVENT_A_ID)).contains("DTSTART;TZID=Europe/Moscow:20250221T180000\r\n", "DTEND;TZID=Europe/Moscow:20250221T200000\r\n");
+
+        for (int run = 1; run <= 2; run++) {
+            CLOCK.set(NOW.plus(Duration.ofHours(run)));
+            deleteCalendar(); // Forces regeneration on a run without saves
+
+            processor.process();
+
+            assertThat(Files.readAllBytes(ICS_FILE)).as("run " + (run + 1)).isEqualTo(first);
+        }
+    }
+
+    @Test
+    void testFinishedStreamUsesRealTiming() throws IOException {
+        // a went live at NOW
+        seed(EVENTS_DIR + "a_live-b-c-seed.json");
+        CLOCK.set(NOW.plus(Duration.ofHours(3)));
+        givenPage(EVENTS_DIR + "b-c.html");
+
+        processor.process();
+
+        assertThat(repo.findById(EVENT_A_ID).orElseThrow().getStatus()).isEqualTo(EventStatus.FINISHED);
+        assertThat(calendarEntry(EVENT_A_ID)).contains("DTSTART;TZID=Europe/Moscow:20250220T030000\r\n", "DTEND;TZID=Europe/Moscow:20250220T060000\r\n");
+    }
+
+    @Test
+    void testCanceledEventRemovedFromCalendar() throws IOException {
+        givenPage(EVENTS_DIR + "a-b-c.html");
+        processor.process();
+        assertThat(calendarUids()).containsExactlyInAnyOrder(EVENT_A_ID, EVENT_B_ID, EVENT_C_ID);
+
+        CLOCK.set(NOW.plus(Duration.ofHours(1)));
+        // a and c disappear before their dates
+        givenPage(EVENTS_DIR + "b.html");
+        processor.process();
+
+        assertThat(calendarUids()).containsExactly(EVENT_B_ID);
+    }
+
+    @Test
+    void testExportFailureDoesNotStopSavingAndNotifications() throws IOException {
+        doThrow(new UncheckedIOException(new IOException("disk full"))).when(calendarExporter).export(any());
+        givenPage(EVENTS_DIR + "a-b-c.html");
+
+        processor.process();
+
+        assertThat(repo.findAll()).hasSize(3);
+        assertThat(sentMessages()).hasSize(3);
+        assertThat(ICS_FILE).doesNotExist();
+
+        // The next run that saves something writes the file
+        doCallRealMethod().when(calendarExporter).export(any());
+        CLOCK.set(NOW.plus(Duration.ofHours(1)));
+        givenPage(EVENTS_DIR + "a-b_new_date-c_new_desc.html");
+
+        processor.process();
+
+        assertThat(calendarUids()).containsExactlyInAnyOrder(EVENT_A_ID, EVENT_B_ID, EVENT_C_ID);
+    }
+
+    @Test
+    void testEventsOlderThanPastPeriodNotLoadedNorExported() throws IOException {
+        // Past period 3y: cutoff is 2022-02-20T00:00Z
+        Instant cutoff = Instant.parse("2022-02-20T00:00:00Z");
+        mongoTemplate.insertAll(List.of(
+                storedEvent("9001", EventStatus.FINISHED, cutoff.minus(Duration.ofDays(30)), cutoff.minus(Duration.ofDays(30))), // too old
+                storedEvent("9002", EventStatus.FINISHED, cutoff.minus(Duration.ofHours(1)), cutoff), // scheduled before, started at the cutoff
+                storedEvent("9003", EventStatus.FINISHED, cutoff, null), // never live, scheduled at the cutoff
+                storedEvent("9004", EventStatus.CANCELED, NOW.plus(Duration.ofDays(1)), null),
+                storedEvent("9005", EventStatus.SCHEDULED, null, null))); // no start
+
+        assertThat(repo.findAllByStatusInStartingFrom(Set.of(EventStatus.SCHEDULED, EventStatus.LIVE, EventStatus.FINISHED), cutoff))
+                .extracting(SgEventEntry::getId)
+                .containsExactlyInAnyOrder("9002", "9003");
+
+        givenPage(EVENTS_DIR + "a-b-c.html");
+        processor.process();
+
+        assertThat(calendarUids()).containsExactlyInAnyOrder("9002", "9003", EVENT_A_ID, EVENT_B_ID, EVENT_C_ID);
+    }
+
+    private static SgEventEntry storedEvent(String id, EventStatus status, Instant date, Instant startedAt) {
+        return SgEventEntry.builder()
+                .id(id)
+                .status(status)
+                .name("Event " + id)
+                .date(date)
+                .startedAt(startedAt)
+                .endedAt(startedAt != null ? startedAt.plus(Duration.ofHours(2)) : null)
+                .version(0L)
+                .build();
+    }
+
+    private void seed(String seedPath) throws IOException {
+        // Insert keeps the seed's version
+        mongoTemplate.insertAll(TestUtils.readJsonListFile(seedPath, mapper, SgEventEntry.class));
+    }
+
+    private static List<String> calendarUids() throws IOException {
+        return Pattern.compile("UID:(\\d+)@stopgame\\.sched-alert-bot")
+                .matcher(Files.readString(ICS_FILE, StandardCharsets.UTF_8))
+                .results()
+                .map(r -> r.group(1))
+                .toList();
+    }
+
+    private static String calendarEntry(String id) throws IOException {
+        return Arrays.stream(Files.readString(ICS_FILE, StandardCharsets.UTF_8).split("BEGIN:VEVENT"))
+                .filter(block -> block.contains("UID:" + id + "@"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No calendar entry for " + id));
+    }
+
+    private static void deleteCalendar() {
+        try {
+            Files.deleteIfExists(ICS_FILE);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static Path createTempDir() {
+        try {
+            return Files.createTempDirectory("sg-ics");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     private void registerUser(String id, String username) {
         userRepo.save(TelegramUser.builder()
                 .id(id)
@@ -210,9 +435,6 @@ class SgIntegrationTest extends AbstractIntegrationTest {
     }
 
     //TODO Добавить кейсы:
-
-    //9. Пользователь не найден/отсутствует
-    //Проверка, что не происходит отправка сообщений, если нет пользователя в базе.
 
     //10. Ошибка парсинга/некорректный HTML
     //Проверка устойчивости к ошибкам парсинга.

@@ -1,5 +1,7 @@
 package com.github.viktor235.schedalertbot.site.stopgame;
 
+import com.github.viktor235.schedalertbot.calendar.CalendarExporter;
+import com.github.viktor235.schedalertbot.calendar.IcsExportProperties;
 import com.github.viktor235.schedalertbot.compare.CompareService;
 import com.github.viktor235.schedalertbot.compare.FieldDiff;
 import com.github.viktor235.schedalertbot.site.stopgame.model.*;
@@ -15,11 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -31,7 +29,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SgProcessor {
 
-    public static final String TEMPLATE_NAME = "stopgame.md.ftl";
+    public static final String TEMPLATE_NAME = "stopgame-telegram.html.ftl";
 
     private final SgScraper pageParser;
     private final SgEventRepository repo;
@@ -40,20 +38,40 @@ public class SgProcessor {
     private final TelegramService tgService;
     private final SgMapper mapper;
     private final Clock clock;
+    private final CalendarExporter calendarExporter;
+    private final SgCalendarMapper calendarMapper;
+    private final IcsExportProperties icsProps;
 
     public void process() {
-        List<TelegramUser> users = tgService.getUsers();//todo filter users who subscribed to this site
-        if (users.isEmpty()) {
-            log.info("No users subscribed to Stopgame. Skipping processing");
-            return;
-        }
-
-        getData().stream()
+        List<EventSnapshot> events = getData().stream()
                 .map(this::normalize)
                 .map(this::compare)
                 .map(this::updateStatus)
                 .map(this::decide)
-                .forEach(this::handle);
+                .toList();
+        events.forEach(this::handle);
+        exportCalendar(events.stream().anyMatch(EventSnapshot::shouldSave));
+    }
+
+    /**
+     * Rewrites the calendar file after a run that saved something, or when the file is missing.
+     * A failure is only logged: it must not affect saving or notifications.
+     */
+    private void exportCalendar(boolean saved) {
+        if (!calendarExporter.isEnabled()) {
+            return;
+        }
+        try {
+            if (!saved && calendarExporter.fileExists()) {
+                return;
+            }
+            // Coarse pre-filter by the past period; the exporter applies the exact one to the resolved start
+            List<SgEventEntry> entries = repo.findAllByStatusInStartingFrom(
+                    Set.of(EventStatus.SCHEDULED, EventStatus.LIVE, EventStatus.FINISHED), calendarExporter.cutoff());
+            calendarExporter.export(calendarMapper.toCalendarEvents(entries, icsProps.url()));
+        } catch (Exception e) {
+            log.error("Failed to export the Stopgame calendar", e);
+        }
     }
 
     private void handle(EventSnapshot event) {
@@ -219,7 +237,7 @@ public class SgProcessor {
         String img = ObjectUtils.firstNonNull(
                 event.web != null ? event.web.getImageUrl() : null,
                 event.db != null ? event.db.getImageUrl() : null);
-        for (TelegramUser usr : tgService.getUsers()) {
+        for (TelegramUser usr : tgService.getUsers()) {//todo filter users who subscribed to this site
             tgService.sendPhotoMessage(usr.getTargetChatId(), img, message);
         }
     }

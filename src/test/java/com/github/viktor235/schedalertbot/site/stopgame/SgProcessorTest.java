@@ -1,5 +1,8 @@
 package com.github.viktor235.schedalertbot.site.stopgame;
 
+import com.github.viktor235.schedalertbot.calendar.CalendarExporter;
+import com.github.viktor235.schedalertbot.calendar.IcsExportProperties;
+import com.github.viktor235.schedalertbot.calendar.IcsWriter;
 import com.github.viktor235.schedalertbot.compare.CompareService;
 import com.github.viktor235.schedalertbot.site.stopgame.model.*;
 import com.github.viktor235.schedalertbot.telegram.TelegramService;
@@ -8,22 +11,25 @@ import com.github.viktor235.schedalertbot.template.TemplateService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,11 +49,12 @@ class SgProcessorTest {
     private TemplateService msgBuildingService;
     @Mock
     private TelegramService tgService;
+    @TempDir
+    Path tempDir;
 
     @BeforeEach
     void setup() {
-        processor = new SgProcessor(pageParser, repo, new CompareService(), msgBuildingService, tgService,
-                new SgMapperImpl(), Clock.fixed(NOW, ZoneOffset.UTC));
+        processor = createProcessor(new IcsExportProperties(false, tempDir.resolve("stopgame.ics"), Duration.ofMinutes(120), Period.ofYears(3), "https://example.com", null));
         when(tgService.getUsers()).thenReturn(List.of(TelegramUser.builder().id("1").targetChatId("1").build()));
         when(msgBuildingService.buildMsg(any(), any())).thenReturn("msg");
         when(repo.findAllByIdIn(any())).thenReturn(List.of());
@@ -175,6 +182,30 @@ class SgProcessorTest {
         SgEventEntry saved = capturedSave();
         assertThat(saved.getStatus()).isEqualTo(EventStatus.LIVE);
         assertThat(saved.getDate()).isNull();
+    }
+
+    // Calendar export
+
+    @Test
+    void process_whenExportDisabledAndEventSaved_thenNoCalendarFile() {
+        givenSite(createWebEvent(false));
+
+        processor.process();
+
+        capturedSave();
+        assertThat(tempDir.resolve("stopgame.ics")).doesNotExist();
+    }
+
+    @Test
+    void process_whenExportDisabledAndFileExists_thenFileUnchanged() throws IOException {
+        Path file = tempDir.resolve("stopgame.ics");
+        Files.writeString(file, "old content");
+        givenSite(createWebEvent(false));
+
+        processor.process();
+
+        capturedSave();
+        assertThat(file).hasContent("old content");
     }
 
     // Save / notify decisions
@@ -403,6 +434,13 @@ class SgProcessorTest {
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(msgBuildingService).buildMsg(eq(SgProcessor.TEMPLATE_NAME), captor.capture());
         return captor.getValue().get("notification");
+    }
+
+    private SgProcessor createProcessor(IcsExportProperties icsProps) {
+        Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
+        return new SgProcessor(pageParser, repo, new CompareService(), msgBuildingService, tgService,
+                new SgMapperImpl(), clock, new CalendarExporter("stopgame", icsProps, new IcsWriter(), clock),
+                new SgCalendarMapperImpl(), icsProps);
     }
 
     private SgEventEntry createDbEvent(EventStatus status) {
