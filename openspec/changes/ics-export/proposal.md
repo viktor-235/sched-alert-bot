@@ -19,9 +19,11 @@ The schedule is only available as Telegram messages, so it cannot be seen in a c
         default-event-duration: 120m   # when the real duration is unknown
         past-period: 3y                # default; how far back events are kept
         url: https://www.twitch.tv/stopgameru
+        time-zone: Europe/Moscow       # optional; UTC when not set
   ```
 
 - **Processing no longer checks for Telegram users.** Every run scrapes, compares and saves as usual. With no registered users, events are saved and no message is sent. A user who registers later is not notified about events already stored.
+- **Telegram is optional.** Without `BOT_TOKEN` the application starts, scrapes, saves and exports as usual; the bot is not registered and nothing is sent. This lets the calendar run without a bot, e.g. locally or in a calendar-only deployment.
 - **When the file is written:** after a run that saved at least one event (including a stream that ended), or when the file does not exist yet. A run without saves leaves an existing file untouched. The file is the site's current schedule snapshot and replaces the previous one. Parent directories are created as needed.
 - **Which events:** stored SCHEDULED, LIVE and FINISHED events whose start is not earlier than `now − past-period` (default 3 years), with no upper bound. CANCELED events are never in the file. Events without a start (see below) are skipped.
 - **One `VEVENT` per included event:**
@@ -31,8 +33,8 @@ The schedule is only available as Telegram messages, so it cannot be seen in a c
     - SCHEDULED and LIVE: start = scheduled `date`, duration = `default-event-duration`. `startedAt` of a LIVE event is not used.
     - FINISHED: start = `startedAt` (the stream really started), end = `endedAt`. If `startedAt` is unknown, start = `date`; if either is unknown, duration = `default-event-duration`.
     - An event whose start resolves to nothing (no `date`, and for FINISHED also no `startedAt`) is skipped.
-  - Times are in UTC (`...Z`); each calendar client renders them in its own time zone.
-  - `SUMMARY` = name; `DESCRIPTION` = description and participants; `URL` = the site's configured `https` stream link (`https://www.twitch.tv/stopgameru` for stopgame, which also opens the Twitch app on phones); the event image is attached.
+  - Times are written in the site's configured time zone with `TZID` and a `VTIMEZONE` block (stopgame: `Europe/Moscow`, the time the site announces); without one, in UTC (`...Z`). Each calendar client renders them in its own time zone; Apple Calendar also shows the original zone's time.
+  - `SUMMARY` = name; `DESCRIPTION` = description, participants and links to Twitch, YouTube and StopGame, rendered from a FreeMarker template like the Telegram messages (Google Calendar ignores `URL`); `URL` = the site's configured `https` stream link (`https://www.twitch.tv/stopgameru` for stopgame, which also opens the Twitch app on phones); the event image is attached.
 - **Reusable writer:** the calendar model and writer are shared, outside `site/`. A source only maps its event model to the common calendar event; stopgame is the first one (`SgEventEntry` → calendar event).
 - **Failure isolation:** a failure to build or write the file is logged and does not stop saving events or sending Telegram notifications.
 - **Deployment:** `docker-compose.yml` gets a volume for the `ics/` directory.
@@ -53,10 +55,10 @@ The schedule is only available as Telegram messages, so it cannot be seen in a c
 ## Capabilities
 
 ### New Capabilities
-- `calendar-export`: per-site iCalendar export of stored events: configuration and defaults, when the file is written, which events are included, how they map to `VEVENT`s (UID, UTC times, duration, content), and failure isolation from the rest of processing.
+- `calendar-export`: per-site iCalendar export of stored events: configuration and defaults, when the file is written, which events are included, how they map to `VEVENT`s (UID, times in UTC or a configured time zone, duration, content), and failure isolation from the rest of processing.
 
 ### Modified Capabilities
-- `event-notifications`: the "Recipients" requirement changes. A run with no registered users no longer skips processing; it saves events and sends nothing.
+- `event-notifications`: the "Recipients" requirement changes. A run with no registered users no longer skips processing; it saves events and sends nothing. New requirement "Telegram is optional": without a bot token the application runs and sends nothing.
 
 ## Impact
 
@@ -67,7 +69,7 @@ The schedule is only available as Telegram messages, so it cannot be seen in a c
 - Config: new `site.stopgame.ics.*` properties in `application.yml`; export disabled by default.
 - Dependencies: likely an iCalendar library (e.g. ical4j) or a small hand-written writer; decided in design.
 - Tests:
-  - calendar generation: UIDs, UTC times, time rules per status (scheduled and live use `date` + default duration; finished uses `startedAt`..`endedAt` with fallbacks), a live event produces the same file on every run, skipped undated and too-old events;
+  - calendar generation: UIDs, times in UTC and in a configured time zone, time rules per status (scheduled and live use `date` + default duration; finished uses `startedAt`..`endedAt` with fallbacks), a live event produces the same file on every run, skipped undated and too-old events;
   - disabled configuration writes nothing;
   - file replacement, directory creation, file written when missing;
   - a write failure does not stop notifications;
