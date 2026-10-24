@@ -1,6 +1,7 @@
 package com.github.viktor235.schedalertbot.site.stopgame;
 
 import com.github.viktor235.schedalertbot.calendar.CalendarExporter;
+import com.github.viktor235.schedalertbot.calendar.CalendarPublisher;
 import com.github.viktor235.schedalertbot.calendar.IcsExportProperties;
 import com.github.viktor235.schedalertbot.calendar.IcsWriter;
 import com.github.viktor235.schedalertbot.compare.CompareService;
@@ -440,7 +441,7 @@ class SgProcessorTest {
         Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
         return new SgProcessor(pageParser, repo, new CompareService(), msgBuildingService, tgService,
                 new SgMapperImpl(), clock, new CalendarExporter("stopgame", icsProps, new IcsWriter(), clock),
-                new SgCalendarMapperImpl(), icsProps);
+                new SgCalendarMapperImpl(), icsProps, mock(CalendarPublisher.class));
     }
 
     private SgEventEntry createDbEvent(EventStatus status) {

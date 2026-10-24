@@ -55,3 +55,9 @@ site:
       past-period: 3y
       url: https://www.twitch.tv/stopgameru
       time-zone: Europe/Moscow
+      publish:
+        enabled: true
+        repository: viktor-235/sched-alert-calendars
+        path: calendars/stopgame.ics
+        min-interval: 10m
+        token: ${CALENDAR_GITHUB_TOKEN:}

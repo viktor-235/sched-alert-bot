@@ -1,6 +1,7 @@
 package com.github.viktor235.schedalertbot.site.stopgame;
 
 import com.github.viktor235.schedalertbot.calendar.CalendarExporter;
+import com.github.viktor235.schedalertbot.calendar.CalendarPublisher;
 import com.github.viktor235.schedalertbot.calendar.IcsExportProperties;
 import com.github.viktor235.schedalertbot.compare.CompareService;
 import com.github.viktor235.schedalertbot.compare.FieldDiff;
@@ -41,6 +42,7 @@ public class SgProcessor {
     private final CalendarExporter calendarExporter;
     private final SgCalendarMapper calendarMapper;
     private final IcsExportProperties icsProps;
+    private final CalendarPublisher calendarPublisher;
 
     public void process() {
         List<EventSnapshot> events = getData().stream()
@@ -51,6 +53,7 @@ public class SgProcessor {
                 .toList();
         events.forEach(this::handle);
         exportCalendar(events.stream().anyMatch(EventSnapshot::shouldSave));
+        publishCalendar();
     }
 
     /**
@@ -71,6 +74,18 @@ public class SgProcessor {
             calendarExporter.export(calendarMapper.toCalendarEvents(entries, icsProps.url()));
         } catch (Exception e) {
             log.error("Failed to export the Stopgame calendar", e);
+        }
+    }
+
+    /**
+     * Publishes the calendar file after every run, so that a change skipped by an earlier run is caught up.
+     * A failure is only logged: it must not affect saving, the export or notifications.
+     */
+    private void publishCalendar() {
+        try {
+            calendarPublisher.publish();
+        } catch (Exception e) {
+            log.error("Failed to publish the Stopgame calendar", e);
         }
     }
 

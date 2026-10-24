@@ -37,6 +37,31 @@ The file holds the stored scheduled, live and finished events and is rewritten a
 
 In Docker the app writes to `/app/ics`; `docker-compose.yml` mounts it as `./ics`.
 
+### Calendar publishing
+The exported file can be published to a separate GitHub repository served by GitHub Pages, so calendar apps can subscribe to it by URL. The bot commits through the GitHub Contents API and changes only its own calendar file. Publishing is off unless `enabled` is set; the bundled `application.yml` enables it for stopgame, so `CALENDAR_GITHUB_TOKEN` must be set, or publishing turned off with `SITE_STOPGAME_ICS_PUBLISH_ENABLED=false`. Settings for stopgame are under `site.stopgame.ics.publish` in `application.yml`:
+
+| Setting | Default | Description |
+|---|---|---|
+| `enabled` | `false` | Publish the calendar file; requires the calendar export to be enabled |
+| `repository` | `viktor-235/sched-alert-calendars` | Target repository, `owner/name` |
+| `branch` | `main` | Target branch |
+| `path` | `calendars/stopgame.ics` | File path in the repository |
+| `min-interval` | `10m` | Minimum time between publish attempts |
+| `token` | `${CALENDAR_GITHUB_TOKEN}` | GitHub token; set `CALENDAR_GITHUB_TOKEN` in `.env` |
+| `api-url` | `https://api.github.com` | GitHub REST API base URL |
+| `commit-message` | `Update calendar` | Message of the bot's commits |
+
+`repository`, `path` and `token` are required when publishing is enabled; the application does not start without them.
+
+After each run the file is committed if it differs from the published one and at least `min-interval` has passed since the last attempt; changes made in between go into the next commit. An unchanged file is never committed, also after a restart. A failure (network, expired token, GitHub outage) is logged and retried after `min-interval`; it does not affect saving, the local export or notifications.
+
+One-time setup:
+1. Create a public repository for the calendars ([viktor-235/sched-alert-calendars](https://github.com/viktor-235/sched-alert-calendars)) and commit an empty `.nojekyll` file to the root of `main`, so Pages serve files as is. The repository must not be empty: the bot writes to an existing branch.
+2. In the repository settings → Pages, deploy from the `main` branch, root folder.
+3. Create a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) with access to that repository only and the single permission Contents: Read and write. Put it into `.env` as `CALENDAR_GITHUB_TOKEN`. The token expires: note the date and replace it before then; an expired token shows up as `Failed to publish calendar` errors in the log.
+
+The calendar is then available at `https://viktor-235.github.io/sched-alert-calendars/calendars/stopgame.ics`. Use `webcal://viktor-235.github.io/sched-alert-calendars/calendars/stopgame.ics` for a one-click subscribe link. Keep the URL stable once shared: subscribers keep it in their calendar apps.
+
 ## Development
 The entry point is a scheduler class, e.g., `SgScheduler`.
 
@@ -52,7 +77,7 @@ Workflow from task to release, commit and PR conventions: [CONTRIBUTING.md](CONT
 - [ ] Retry page fetch on transient network errors (e.g. connect timeout), so a single failure does not trigger an admin alert
 - [ ] Move configuration to the database, with default values in properties
 - [x] Rewrite using XPath if it allows attribute extraction
-- [ ] Subscribe to calendar via link
+- [x] Subscribe to calendar via link
 - [x] Add Twitch/YouTube links during live streams
 - [ ] Prevent sending past events
 - [x] Add stream cover image
