@@ -11,8 +11,9 @@ mongock:
   enabled: true
 telegram:
   bot:
-    token: ${BOT_TOKEN}
-    username: ${BOT_NAME}
+    # Optional: without a token the bot is disabled, events are still processed and exported
+    token: ${BOT_TOKEN:}
+    username: ${BOT_NAME:}
 logging:
   level:
     com.github.viktor235.schedalertbot: INFO
@@ -47,3 +48,10 @@ site:
         description: ".//*[contains(@class, '_stream-description_')]"
         participants: ".//*[contains(@class, '_user-info__name_')]"
         imageUrl: ".//*[contains(@class, '_stream-poster_')]/@src"
+    ics:
+      enabled: true
+      path: ./ics/stopgame.ics
+      default-event-duration: 120m
+      past-period: 3y
+      url: https://www.twitch.tv/stopgameru
+      time-zone: Europe/Moscow

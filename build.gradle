@@ -43,6 +43,9 @@ dependencies {
     implementation 'org.freemarker:freemarker:2.3.32'
     implementation 'org.telegram:telegrambots-spring-boot-starter:6.9.7.1'
     implementation("org.apache.commons:commons-collections4:4.4")
+    implementation 'org.mnode.ical4j:ical4j:4.4.0'
+    // Annotations used by the patched ical4j ZoneRulesBuilder copy
+    compileOnly 'org.jspecify:jspecify:1.0.0'
 
     // MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
