@@ -17,5 +17,9 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
         registry.add("telegram.bot.token", () -> "test-token");
         registry.add("telegram.bot.username", () -> "test_bot");
+        // Tests run the processing themselves: no scheduled runs against the real site
+        registry.add("site.stopgame.scheduler.cron", () -> "-");
+        // Tests never publish to GitHub, whatever application.yml says
+        registry.add("site.stopgame.ics.publish.enabled", () -> "false");
     }
 }

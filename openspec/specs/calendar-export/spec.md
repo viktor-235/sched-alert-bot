@@ -89,6 +89,17 @@ The file SHALL be RFC 5545 iCalendar content with one `VEVENT` per included even
 - **WHEN** the time zone is `Europe/Moscow` and an event was last updated at 12:00Z
 - **THEN** its entry has `DTSTAMP:...T120000Z` and `LAST-MODIFIED:...T120000Z`
 
+### Requirement: Calendar name
+Each site's export SHALL have an optional calendar name. When the name is set, the file SHALL contain it as the calendar properties `NAME` (RFC 7986) and `X-WR-CALNAME`. When the name is not set or blank, the file SHALL contain neither property.
+
+#### Scenario: Name set
+- **WHEN** the calendar name is `StopGame — Стримы`
+- **THEN** the file contains `NAME:StopGame — Стримы` and `X-WR-CALNAME:StopGame — Стримы`
+
+#### Scenario: Name not set
+- **WHEN** no calendar name is configured
+- **THEN** the file contains no `NAME` and no `X-WR-CALNAME`
+
 ### Requirement: Event time zone
 Without a configured time zone, start and end times SHALL be written in UTC (`...Z` form) and the file SHALL contain no `VTIMEZONE`. With a configured time zone, start and end times SHALL be written as local times of that zone with a `TZID` parameter, and the file SHALL contain one `VTIMEZONE` for that zone. The time zone SHALL NOT change the instant an entry starts or ends.
 

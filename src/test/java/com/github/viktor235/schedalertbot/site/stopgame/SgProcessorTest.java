@@ -1,6 +1,7 @@
 package com.github.viktor235.schedalertbot.site.stopgame;
 
 import com.github.viktor235.schedalertbot.calendar.CalendarExporter;
+import com.github.viktor235.schedalertbot.calendar.CalendarPublisher;
 import com.github.viktor235.schedalertbot.calendar.IcsExportProperties;
 import com.github.viktor235.schedalertbot.calendar.IcsWriter;
 import com.github.viktor235.schedalertbot.compare.CompareService;
@@ -54,7 +55,7 @@ class SgProcessorTest {
 
     @BeforeEach
     void setup() {
-        processor = createProcessor(new IcsExportProperties(false, tempDir.resolve("stopgame.ics"), Duration.ofMinutes(120), Period.ofYears(3), "https://example.com", null));
+        processor = createProcessor(new IcsExportProperties(false, tempDir.resolve("stopgame.ics"), Duration.ofMinutes(120), Period.ofYears(3), "https://example.com", null, null));
         when(tgService.getUsers()).thenReturn(List.of(TelegramUser.builder().id("1").targetChatId("1").build()));
         when(msgBuildingService.buildMsg(any(), any())).thenReturn("msg");
         when(repo.findAllByIdIn(any())).thenReturn(List.of());
@@ -440,7 +441,7 @@ class SgProcessorTest {
         Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
         return new SgProcessor(pageParser, repo, new CompareService(), msgBuildingService, tgService,
                 new SgMapperImpl(), clock, new CalendarExporter("stopgame", icsProps, new IcsWriter(), clock),
-                new SgCalendarMapperImpl(), icsProps);
+                new SgCalendarMapperImpl(), icsProps, mock(CalendarPublisher.class));
     }
 
     private SgEventEntry createDbEvent(EventStatus status) {

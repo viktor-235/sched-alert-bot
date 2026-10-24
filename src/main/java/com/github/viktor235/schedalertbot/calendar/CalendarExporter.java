@@ -56,7 +56,7 @@ public class CalendarExporter {
                 .sorted(Comparator.comparing(CalendarEvent::start).thenComparing(CalendarEvent::sourceId))
                 .toList();
 
-        writeAtomically(props.path(), writer.write(siteKey, props.timeZone(), included));
+        writeAtomically(props.path(), writer.write(siteKey, props.name(), props.timeZone(), included));
         log.info("Calendar {} written with {} events", props.path(), included.size());
     }
 

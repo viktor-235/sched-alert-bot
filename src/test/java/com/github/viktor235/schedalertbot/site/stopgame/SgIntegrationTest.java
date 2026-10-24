@@ -3,6 +3,7 @@ package com.github.viktor235.schedalertbot.site.stopgame;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.viktor235.schedalertbot.AbstractIntegrationTest;
 import com.github.viktor235.schedalertbot.calendar.CalendarExporter;
+import com.github.viktor235.schedalertbot.calendar.CalendarPublisher;
 import com.github.viktor235.schedalertbot.site.stopgame.model.EventStatus;
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventEntry;
 import com.github.viktor235.schedalertbot.site.stopgame.model.SgEventRepository;
@@ -68,6 +69,8 @@ class SgIntegrationTest extends AbstractIntegrationTest {
     private MongoTemplate mongoTemplate;
     @SpyBean
     private CalendarExporter calendarExporter;
+    @SpyBean
+    private CalendarPublisher calendarPublisher;
 
     private static final Instant NOW = Instant.parse("2025-02-20T00:00:00.000Z");
     private static final MutableClock CLOCK = new MutableClock(NOW);
@@ -96,7 +99,7 @@ class SgIntegrationTest extends AbstractIntegrationTest {
         CLOCK.set(NOW);
         repo.deleteAll();
         userRepo.deleteAll();
-        reset(telegramService, calendarExporter);
+        reset(telegramService, calendarExporter, calendarPublisher);
 
         registerUser(TEST_USER_ID, TEST_USERNAME);
 
@@ -330,6 +333,33 @@ class SgIntegrationTest extends AbstractIntegrationTest {
         processor.process();
 
         assertThat(calendarUids()).containsExactlyInAnyOrder(EVENT_A_ID, EVENT_B_ID, EVENT_C_ID);
+    }
+
+    // Calendar publishing
+
+    @Test
+    void testPublisherCalledOnRunWithoutSaves() throws IOException {
+        seed(EVENTS_DIR + "a_live-b-c-seed.json");
+        Files.writeString(ICS_FILE, "old content");
+        givenPage(EVENTS_DIR + "a_live-b-c.html");
+
+        processor.process();
+
+        assertThat(repo.findAll()).extracting(SgEventEntry::getVersion).containsOnly(0L);
+        verify(calendarPublisher).publish();
+    }
+
+    @Test
+    void testPublishFailureDoesNotStopSavingExportAndNotifications() throws IOException {
+        doThrow(new IllegalStateException("GitHub unavailable")).when(calendarPublisher).publish();
+        givenPage(EVENTS_DIR + "a-b-c.html");
+
+        processor.process();
+
+        assertThat(repo.findAll()).hasSize(3);
+        assertThat(sentMessages()).hasSize(3);
+        assertThat(calendarUids()).containsExactlyInAnyOrder(EVENT_A_ID, EVENT_B_ID, EVENT_C_ID);
+        verify(calendarPublisher).publish();
     }
 
     @Test

@@ -1,7 +1,9 @@
 package com.github.viktor235.schedalertbot.site.stopgame;
 
 import com.github.viktor235.schedalertbot.calendar.CalendarExporter;
+import com.github.viktor235.schedalertbot.calendar.CalendarPublisher;
 import com.github.viktor235.schedalertbot.calendar.IcsExportProperties;
+import com.github.viktor235.schedalertbot.calendar.IcsPublishProperties;
 import com.github.viktor235.schedalertbot.calendar.IcsWriter;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.Bean;
@@ -23,5 +25,15 @@ public class SgCalendarConfig {
     @Bean
     public CalendarExporter sgCalendarExporter(IcsExportProperties sgIcsExportProperties, IcsWriter icsWriter, Clock clock) {
         return new CalendarExporter(SITE_KEY, sgIcsExportProperties, icsWriter, clock);
+    }
+
+    @Bean
+    public IcsPublishProperties sgIcsPublishProperties(Environment env) {
+        return IcsPublishProperties.bind(Binder.get(env), "site.stopgame.ics.publish");
+    }
+
+    @Bean
+    public CalendarPublisher sgCalendarPublisher(IcsExportProperties sgIcsExportProperties, IcsPublishProperties sgIcsPublishProperties, Clock clock) {
+        return CalendarPublisher.create(sgIcsExportProperties, sgIcsPublishProperties, clock);
     }
 }

@@ -113,7 +113,7 @@ class CalendarExporterTest {
     }
 
     private static CalendarExporter exporter(Path file) {
-        IcsExportProperties props = new IcsExportProperties(true, file, Duration.ofMinutes(120), Period.ofYears(3), "https://example.com", null);
+        IcsExportProperties props = new IcsExportProperties(true, file, Duration.ofMinutes(120), Period.ofYears(3), "https://example.com", null, null);
         return new CalendarExporter("site", props, new IcsWriter(), Clock.fixed(NOW, ZoneOffset.UTC));
     }
 

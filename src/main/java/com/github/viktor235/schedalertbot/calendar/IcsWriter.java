@@ -34,6 +34,7 @@ public class IcsWriter {
 
     static final String PRODID = "-//viktor-235//sched-alert-bot//EN";
     private static final String UID_DOMAIN = "sched-alert-bot";
+    private static final String X_WR_CALNAME = "X-WR-CALNAME";
 
     // Definitions come from the ical4j jar; their online refresh is off by default, so the output stays stable
     private final TimeZoneRegistry timeZoneRegistry = TimeZoneRegistryFactory.getInstance().createRegistry();
@@ -48,15 +49,30 @@ public class IcsWriter {
     }
 
     /**
+     * Writes no calendar name
+     *
+     * @see #write(String, String, ZoneId, List)
+     */
+    public byte[] write(String siteKey, ZoneId timeZone, List<CalendarEvent> events) {
+        return write(siteKey, null, timeZone, events);
+    }
+
+    /**
      * @param siteKey  site the events come from, part of every UID
+     * @param name     calendar name, written as NAME and X-WR-CALNAME; {@code null} or blank for none
      * @param timeZone zone of start and end times, written with TZID and a VTIMEZONE; {@code null} for UTC
      * @param events   events in the order they are written
      */
-    public byte[] write(String siteKey, ZoneId timeZone, List<CalendarEvent> events) {
+    public byte[] write(String siteKey, String name, ZoneId timeZone, List<CalendarEvent> events) {
         Calendar calendar = new Calendar();
         calendar.add(new ProdId(PRODID));
         calendar.add(ImmutableVersion.VERSION_2_0);
         calendar.add(ImmutableCalScale.GREGORIAN);
+        if (hasText(name)) {
+            // NAME is RFC 7986; Google Calendar and Apple Calendar read only X-WR-CALNAME
+            calendar.add(new Name(name));
+            calendar.add(new XProperty(X_WR_CALNAME, name));
+        }
         if (timeZone != null) {
             calendar.add(vTimeZone(timeZone));
         }
