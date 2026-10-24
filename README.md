@@ -63,6 +63,8 @@ One-time setup:
 
 The calendar is then available at `https://viktor-235.github.io/sched-alert-calendars/stopgame/streams.ics`. Use `webcal://viktor-235.github.io/sched-alert-calendars/stopgame/streams.ics` for a one-click subscribe link. Each site gets its own folder, with the calendar file named after its content (`<site>/<content>.ics`), so a page for the site can sit next to it as `<site>/index.html` and be served at `/sched-alert-calendars/<site>/`. Keep the URL stable once shared: subscribers keep it in their calendar apps, and Pages cannot redirect them to a new one.
 
+The calendars repository also hosts the website [viktor-235.github.io/sched-alert-calendars](https://viktor-235.github.io/sched-alert-calendars/): a page per site with subscribe links, the Telegram channel and an interactive calendar built from the published file, e.g. [StopGame](https://viktor-235.github.io/sched-alert-calendars/stopgame/). The pages are static files committed to that repository by hand; the bot never changes them.
+
 ## Development
 The entry point is a scheduler class, e.g., `SgScheduler`.
 
