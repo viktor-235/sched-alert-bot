@@ -1,10 +1,10 @@
-# Spec Delta
+# calendar-publishing Specification
 
 ## Purpose
 
 Publishes a site's exported `.ics` file to a GitHub repository served by GitHub Pages, so that calendar apps can subscribe to the schedule by a stable public URL.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Publishing is optional and per site
 Each site SHALL have its own publishing settings: enabled flag, repository (`owner/name`), branch, file path in the repository, minimum interval between commits, access token, API URL and commit message. Publishing SHALL be disabled by default. The branch SHALL default to `main`, the minimum interval to 10 minutes and the API URL to `https://api.github.com`. When publishing is disabled, the site's processing SHALL NOT call GitHub.
