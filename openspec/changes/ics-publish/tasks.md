@@ -19,6 +19,11 @@
 
 - [x] 4.1 README: publishing section (settings table, creating the calendars repository with `.nojekyll`, enabling Pages, fine-grained token with Contents: Read and write on that repository only, rotation, subscription URL and `webcal://`); check off "Subscribe to calendar via link". Verify: the settings in the README match `IcsPublishProperties` and `application.yml`.
 
-## 5. Verification
+## 5. URL layout and calendar name
 
-- [x] 5.1 Run `./gradlew test`. Verify: all tests pass.
+- [x] 5.1 Publish stopgame to `stopgame/cal.ics` (design decision 10): `application.yml`, README, proposal. Verify: the README URLs and settings table match `application.yml`.
+- [x] 5.2 Add the optional `name` to `IcsExportProperties`, write it in `IcsWriter` as `NAME` and `X-WR-CALNAME`, pass it from `CalendarExporter`; `name: StopGame — Стримы` in `application.yml`. Verify: `IcsWriterTest` covers a name with an escaped comma and a blank name writing nothing; `IcsExportPropertiesTest` covers the unset and bound name; the golden files are unchanged.
+
+## 6. Verification
+
+- [x] 6.1 Run `./gradlew test`. Verify: all tests pass.

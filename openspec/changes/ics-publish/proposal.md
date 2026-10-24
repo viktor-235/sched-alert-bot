@@ -16,11 +16,12 @@ The `.ics` file written by `ics-export` exists only on the bot's server, so nobo
 - **Repository layout:**
   ```
   .nojekyll            # Pages serve files as is
-  index.html           # web calendar view (#15), edited by hand, not by the bot
-  calendars/
-    stopgame.ics       # written only by the bot
+  index.html           # index of all calendars (#15), edited by hand, not by the bot
+  stopgame/
+    index.html         # the site's page, edited by hand, served at /sched-alert-calendars/stopgame/
+    cal.ics            # written only by the bot
   ```
-  Subscription URL: `https://viktor-235.github.io/sched-alert-calendars/calendars/stopgame.ics` (`webcal://` for one-click subscribe).
+  Subscription URL: `https://viktor-235.github.io/sched-alert-calendars/stopgame/cal.ics` (`webcal://` for one-click subscribe). One folder per site keeps the page and its calendar together and leaves room for more calendars of the same site later (e.g. `stopgame/streams.ics`).
 - **Optional, per-site publishing, disabled by default.** The bundled `application.yml` enables it for stopgame, like the export, so the token is required to start. Configured per site next to the export, e.g. for stopgame:
 
   ```yaml
@@ -31,7 +32,7 @@ The `.ics` file written by `ics-export` exists only on the bot's server, so nobo
           enabled: true                      # property default: false
           repository: viktor-235/sched-alert-calendars
           branch: main
-          path: calendars/stopgame.ics
+          path: stopgame/cal.ics
           min-interval: 10m                  # minimum time between commits
           token: ${CALENDAR_GITHUB_TOKEN:}
   ```
@@ -42,6 +43,7 @@ The `.ics` file written by `ics-export` exists only on the bot's server, so nobo
   - not more often than `min-interval`. Changes made in between are published together by the next commit, which carries the latest file. Calendar clients refresh subscriptions every few hours anyway, and branch-built Pages have a soft limit of 10 builds per hour;
   - a file that was not published (failure, interval not yet passed, bot restarted) is published by a later run.
 - **Failure isolation:** a publish failure (network, expired or revoked token, GitHub outage) is logged and does not stop scraping, saving, the local export or Telegram notifications. It is retried after `min-interval`, so a revoked token logs one error per interval, not one per run.
+- **Calendar name.** The exported file gets an optional per-site name (`site.<source>.ics.name`, stopgame: `StopGame — Стримы`), written as `NAME` (RFC 7986) and `X-WR-CALNAME`. Without it, calendar apps show the URL or the file name `cal.ics` on subscribe.
 - **Affected statuses and users:**
   - Telegram users: no change.
   - Event statuses: no change. The published file is the local `ics-export` file as is: SCHEDULED, LIVE and FINISHED events, no CANCELED ones.
@@ -52,9 +54,9 @@ The `.ics` file written by `ics-export` exists only on the bot's server, so nobo
 - The web calendar view (`index.html`), issue #15.
 - Creating the calendars repository and enabling Pages: a one-time manual setup, described in the README.
 
-## Open questions
+## Decided
 
-- **Custom domain, decided before the first public link.** Subscribers keep the URL in their calendar apps, so it should not change after publishing. The repository (`viktor-235/sched-alert-calendars`) and the path (`calendars/<site>.ics`) are decided. Open: whether to use a custom domain now. If one is added later, Pages redirect from `github.io` to it, but a redirect still depends on GitHub keeping it, and the path must stay the same.
+- **No custom domain.** The URL stays on `viktor-235.github.io`. Subscribers keep the URL in their calendar apps and Pages cannot redirect a moved file, so the repository name (`sched-alert-calendars`) and the path (`<site>/cal.ics`) are fixed once the first link is shared.
 
 ## Capabilities
 
@@ -62,14 +64,14 @@ The `.ics` file written by `ics-export` exists only on the bot's server, so nobo
 - `calendar-publishing`: per-site publishing of the exported `.ics` file to a GitHub repository served by Pages: configuration and defaults, when a commit is made (changed content, minimum interval, catching up on unpublished changes), conflict handling, and failure isolation from the rest of processing.
 
 ### Modified Capabilities
-- None. `calendar-export` (introduced by `ics-export`) does not change; publishing reads its output file.
+- `calendar-export`: optional calendar name written to the file. Otherwise unchanged; publishing reads its output file.
 
 ## Impact
 
 - Code:
   - a shared publisher outside `site/` (GitHub Contents API client, change detection, interval), reused by future sources;
   - a call from the site processing after the export step.
-- Config: new `site.<source>.ics.publish.*` properties, disabled by default; `CALENDAR_GITHUB_TOKEN` in `.env.example`.
+- Config: new `site.<source>.ics.publish.*` properties, disabled by default; new optional `site.<source>.ics.name`; `CALENDAR_GITHUB_TOKEN` in `.env.example`.
 - Dependencies: none; Spring's `RestClient` and Jackson are already on the classpath.
 - Tests: commit only on changed content; no commit within `min-interval`; a skipped change is published later; an outdated `sha` is retried; a publish failure does not stop notifications; disabled configuration makes no API calls. The GitHub API is stubbed in tests.
 - Deployment: the token in `.env`; README describes creating the calendars repository, enabling Pages, `.nojekyll` and the token permissions.

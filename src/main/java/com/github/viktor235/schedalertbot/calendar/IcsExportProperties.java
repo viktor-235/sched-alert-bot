@@ -19,13 +19,15 @@ import java.util.List;
  * @param pastPeriod           how far back events are kept in the file
  * @param url                  stream link put into every event
  * @param timeZone             zone of event start and end times; {@code null} writes them in UTC
+ * @param name                 calendar name shown by calendar apps; {@code null} writes none
  */
 public record IcsExportProperties(@DefaultValue("false") boolean enabled,
                                   Path path,
                                   Duration defaultEventDuration,
                                   @DefaultValue("3y") Period pastPeriod,
                                   String url,
-                                  ZoneId timeZone) {
+                                  ZoneId timeZone,
+                                  String name) {
 
     public IcsExportProperties {
         if (enabled) {

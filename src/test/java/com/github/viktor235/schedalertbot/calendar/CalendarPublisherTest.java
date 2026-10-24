@@ -203,7 +203,7 @@ class CalendarPublisherTest {
     }
 
     private CalendarPublisher publisher(boolean exportEnabled, boolean publishEnabled) {
-        IcsExportProperties exportProps = new IcsExportProperties(exportEnabled, file, Duration.ofMinutes(120), Period.ofYears(3), "https://example.com", null);
+        IcsExportProperties exportProps = new IcsExportProperties(exportEnabled, file, Duration.ofMinutes(120), Period.ofYears(3), "https://example.com", null, null);
         IcsPublishProperties publishProps = new IcsPublishProperties(publishEnabled, "owner/calendars", "main", "calendars/site.ics",
                 MIN_INTERVAL, "token", "https://api.github.test", MESSAGE);
         return new CalendarPublisher(exportProps, publishProps, client, clock);

@@ -55,7 +55,7 @@ class SgProcessorTest {
 
     @BeforeEach
     void setup() {
-        processor = createProcessor(new IcsExportProperties(false, tempDir.resolve("stopgame.ics"), Duration.ofMinutes(120), Period.ofYears(3), "https://example.com", null));
+        processor = createProcessor(new IcsExportProperties(false, tempDir.resolve("stopgame.ics"), Duration.ofMinutes(120), Period.ofYears(3), "https://example.com", null, null));
         when(tgService.getUsers()).thenReturn(List.of(TelegramUser.builder().id("1").targetChatId("1").build()));
         when(msgBuildingService.buildMsg(any(), any())).thenReturn("msg");
         when(repo.findAllByIdIn(any())).thenReturn(List.of());

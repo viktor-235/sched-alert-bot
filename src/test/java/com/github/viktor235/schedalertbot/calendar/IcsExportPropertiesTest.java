@@ -25,6 +25,7 @@ class IcsExportPropertiesTest {
         assertThat(props.enabled()).isFalse();
         assertThat(props.pastPeriod()).isEqualTo(Period.ofYears(3));
         assertThat(props.timeZone()).isNull();
+        assertThat(props.name()).isNull();
     }
 
     @Test
@@ -35,7 +36,8 @@ class IcsExportPropertiesTest {
                 PREFIX + ".default-event-duration", "120m",
                 PREFIX + ".past-period", "1y",
                 PREFIX + ".url", "https://www.twitch.tv/stopgameru",
-                PREFIX + ".time-zone", "Europe/Moscow"));
+                PREFIX + ".time-zone", "Europe/Moscow",
+                PREFIX + ".name", "StopGame — Стримы"));
 
         assertThat(props.enabled()).isTrue();
         assertThat(props.timeZone()).isEqualTo(ZoneId.of("Europe/Moscow"));
@@ -43,6 +45,7 @@ class IcsExportPropertiesTest {
         assertThat(props.defaultEventDuration()).isEqualTo(Duration.ofMinutes(120));
         assertThat(props.pastPeriod()).isEqualTo(Period.ofYears(1));
         assertThat(props.url()).isEqualTo("https://www.twitch.tv/stopgameru");
+        assertThat(props.name()).isEqualTo("StopGame — Стримы");
     }
 
     @Test

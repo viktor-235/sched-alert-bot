@@ -136,6 +136,12 @@ Integration tests force `site.stopgame.ics.publish.enabled=false` and disable th
   - blob SHA matches git's (`git hash-object` of a known string).
 - `SgIntegrationTest`: the publisher is called on a run without saves; a publisher failure still saves and notifies.
 
+### 10. URL layout and calendar name
+
+One folder per site in the calendars repository: `<site>/cal.ics` is written by the bot, `<site>/index.html` (the site's page) and the root `index.html` (index of all sites) are edited by hand. Pages serve the folder at `/sched-alert-calendars/<site>/` and redirect the form without the slash, so the page and its calendar share one URL prefix, and more calendars of the same site can be added next to `cal.ics`. The path is a configuration value; the code does not depend on the layout.
+
+The short file name says nothing on its own, so the export writes the calendar name: optional `site.<source>.ics.name` in `IcsExportProperties`, written by `IcsWriter` as `NAME` (RFC 7986) and `X-WR-CALNAME` (read by Google Calendar and Apple Calendar) after `CALSCALE`. A missing or blank name writes neither, so existing golden files are unchanged.
+
 ## Risks / Trade-offs
 
 - [The token expires and publishing silently stops] → Logged at ERROR every `min-interval`; admin alerts (`admin-alerts` change) can pick it up later. The README notes the expiry date to watch.
@@ -146,10 +152,10 @@ Integration tests force `site.stopgame.ics.publish.enabled=false` and disable th
 
 ## Migration Plan
 
-1. The property default is disabled, but the bundled `application.yml` enables publishing for stopgame (`repository: viktor-235/sched-alert-calendars`, `path: calendars/stopgame.ics`), like the export. Before deploying: the calendars repository has `.nojekyll` on `main`, Pages are enabled from `main` at the root, and `CALENDAR_GITHUB_TOKEN` is set in `.env`. Without the token the application does not start.
+1. The property default is disabled, but the bundled `application.yml` enables publishing for stopgame (`repository: viktor-235/sched-alert-calendars`, `path: stopgame/cal.ics`), like the export. Before deploying: the calendars repository has `.nojekyll` on `main`, Pages are enabled from `main` at the root, and `CALENDAR_GITHUB_TOKEN` is set in `.env`. Without the token the application does not start.
 2. To deploy without publishing, set `SITE_STOPGAME_ICS_PUBLISH_ENABLED=false`.
 3. Rollback: set `enabled=false`; the published file stays as it was. No data migration either way.
 
 ## Open Questions
 
-- Custom domain (see proposal). Configuration and README only; the code does not depend on it. To be decided before the first public link.
+- None. No custom domain; the URL layout is decision 10.

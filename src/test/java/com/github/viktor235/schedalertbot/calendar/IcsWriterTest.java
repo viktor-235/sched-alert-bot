@@ -106,6 +106,20 @@ class IcsWriterTest {
     }
 
     @Test
+    void write_whenNameSet_thenNameAndXWrCalName() {
+        String text = new String(writer.write("stopgame", "StopGame, стримы", null, List.of()), StandardCharsets.UTF_8);
+
+        assertThat(text).contains("NAME:StopGame\\, стримы\r\n", "X-WR-CALNAME:StopGame\\, стримы\r\n");
+    }
+
+    @Test
+    void write_whenNameBlank_thenNoName() {
+        String text = new String(writer.write("stopgame", " ", null, List.of()), StandardCharsets.UTF_8);
+
+        assertThat(text).doesNotContain("NAME");
+    }
+
+    @Test
     void write_whenNoEvents_thenEmptyCalendar() throws IOException {
         assertMatchesGolden(writer.write("stopgame", List.of()), "empty.ics");
     }
