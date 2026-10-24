@@ -50,7 +50,7 @@ site:
         imageUrl: ".//*[contains(@class, '_stream-poster_')]/@src"
     ics:
       enabled: true
-      path: ./ics/stopgame.ics
+      path: ./ics/stopgame/streams.ics
       default-event-duration: 120m
       past-period: 3y
       url: https://www.twitch.tv/stopgameru
@@ -59,6 +59,6 @@ site:
       publish:
         enabled: true
         repository: viktor-235/sched-alert-calendars
-        path: stopgame/cal.ics
+        path: stopgame/streams.ics
         min-interval: 10m
         token: ${CALENDAR_GITHUB_TOKEN:}

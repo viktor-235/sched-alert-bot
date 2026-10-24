@@ -21,7 +21,7 @@
 
 ## 5. URL layout and calendar name
 
-- [x] 5.1 Publish stopgame to `stopgame/cal.ics` (design decision 10): `application.yml`, README, proposal. Verify: the README URLs and settings table match `application.yml`.
+- [x] 5.1 Publish stopgame to `stopgame/streams.ics` and write the local file to `./ics/stopgame/streams.ics` (design decision 10): `application.yml`, README, proposal. Verify: the README URLs and settings table match `application.yml`.
 - [x] 5.2 Add the optional `name` to `IcsExportProperties`, write it in `IcsWriter` as `NAME` and `X-WR-CALNAME`, pass it from `CalendarExporter`; `name: StopGame — Стримы` in `application.yml`. Verify: `IcsWriterTest` covers a name with an escaped comma and a blank name writing nothing; `IcsExportPropertiesTest` covers the unset and bound name; the golden files are unchanged.
 
 ## 6. Verification

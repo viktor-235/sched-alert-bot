@@ -19,9 +19,9 @@ The `.ics` file written by `ics-export` exists only on the bot's server, so nobo
   index.html           # index of all calendars (#15), edited by hand, not by the bot
   stopgame/
     index.html         # the site's page, edited by hand, served at /sched-alert-calendars/stopgame/
-    cal.ics            # written only by the bot
+    streams.ics        # written only by the bot
   ```
-  Subscription URL: `https://viktor-235.github.io/sched-alert-calendars/stopgame/cal.ics` (`webcal://` for one-click subscribe). One folder per site keeps the page and its calendar together and leaves room for more calendars of the same site later (e.g. `stopgame/streams.ics`).
+  Subscription URL: `https://viktor-235.github.io/sched-alert-calendars/stopgame/streams.ics` (`webcal://` for one-click subscribe). One folder per site keeps the page and its calendar together and leaves room for more calendars of the same site later. The file is named after its content (`<site>/<content>.ics`); `streams.ics` holds all streams of the site.
 - **Optional, per-site publishing, disabled by default.** The bundled `application.yml` enables it for stopgame, like the export, so the token is required to start. Configured per site next to the export, e.g. for stopgame:
 
   ```yaml
@@ -32,7 +32,7 @@ The `.ics` file written by `ics-export` exists only on the bot's server, so nobo
           enabled: true                      # property default: false
           repository: viktor-235/sched-alert-calendars
           branch: main
-          path: stopgame/cal.ics
+          path: stopgame/streams.ics
           min-interval: 10m                  # minimum time between commits
           token: ${CALENDAR_GITHUB_TOKEN:}
   ```
@@ -43,7 +43,7 @@ The `.ics` file written by `ics-export` exists only on the bot's server, so nobo
   - not more often than `min-interval`. Changes made in between are published together by the next commit, which carries the latest file. Calendar clients refresh subscriptions every few hours anyway, and branch-built Pages have a soft limit of 10 builds per hour;
   - a file that was not published (failure, interval not yet passed, bot restarted) is published by a later run.
 - **Failure isolation:** a publish failure (network, expired or revoked token, GitHub outage) is logged and does not stop scraping, saving, the local export or Telegram notifications. It is retried after `min-interval`, so a revoked token logs one error per interval, not one per run.
-- **Calendar name.** The exported file gets an optional per-site name (`site.<source>.ics.name`, stopgame: `StopGame — Стримы`), written as `NAME` (RFC 7986) and `X-WR-CALNAME`. Without it, calendar apps show the URL or the file name `cal.ics` on subscribe.
+- **Calendar name.** The exported file gets an optional per-site name (`site.<source>.ics.name`, stopgame: `StopGame — Стримы`), written as `NAME` (RFC 7986) and `X-WR-CALNAME`. The file name does not include the site, so without it calendar apps show the URL or `streams.ics` on subscribe.
 - **Affected statuses and users:**
   - Telegram users: no change.
   - Event statuses: no change. The published file is the local `ics-export` file as is: SCHEDULED, LIVE and FINISHED events, no CANCELED ones.
@@ -56,7 +56,7 @@ The `.ics` file written by `ics-export` exists only on the bot's server, so nobo
 
 ## Decided
 
-- **No custom domain.** The URL stays on `viktor-235.github.io`. Subscribers keep the URL in their calendar apps and Pages cannot redirect a moved file, so the repository name (`sched-alert-calendars`) and the path (`<site>/cal.ics`) are fixed once the first link is shared.
+- **No custom domain.** The URL stays on `viktor-235.github.io`. Subscribers keep the URL in their calendar apps and Pages cannot redirect a moved file, so the repository name (`sched-alert-calendars`) and the path (`<site>/streams.ics`) are fixed once the first link is shared.
 
 ## Capabilities
 

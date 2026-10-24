@@ -25,7 +25,7 @@ Each site can write its schedule to an iCalendar (`.ics`) file that calendar app
 | Setting | Default | Description |
 |---|---|---|
 | `enabled` | `false` | Write the calendar file |
-| `path` | `./ics/stopgame.ics` | File location; missing directories are created |
+| `path` | `./ics/stopgame/streams.ics` | File location; missing directories are created |
 | `default-event-duration` | `120m` | Event duration when the real one is unknown |
 | `past-period` | `3y` | How far back events are kept in the file |
 | `url` | `https://www.twitch.tv/stopgameru` | Stream link added to every event |
@@ -46,7 +46,7 @@ The exported file can be published to a separate GitHub repository served by Git
 | `enabled` | `false` | Publish the calendar file; requires the calendar export to be enabled |
 | `repository` | `viktor-235/sched-alert-calendars` | Target repository, `owner/name` |
 | `branch` | `main` | Target branch |
-| `path` | `stopgame/cal.ics` | File path in the repository |
+| `path` | `stopgame/streams.ics` | File path in the repository |
 | `min-interval` | `10m` | Minimum time between publish attempts |
 | `token` | `${CALENDAR_GITHUB_TOKEN}` | GitHub token; set `CALENDAR_GITHUB_TOKEN` in `.env` |
 | `api-url` | `https://api.github.com` | GitHub REST API base URL |
@@ -61,7 +61,7 @@ One-time setup:
 2. In the repository settings → Pages, deploy from the `main` branch, root folder.
 3. Create a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) with access to that repository only and the single permission Contents: Read and write. Put it into `.env` as `CALENDAR_GITHUB_TOKEN`. The token expires: note the date and replace it before then; an expired token shows up as `Failed to publish calendar` errors in the log.
 
-The calendar is then available at `https://viktor-235.github.io/sched-alert-calendars/stopgame/cal.ics`. Use `webcal://viktor-235.github.io/sched-alert-calendars/stopgame/cal.ics` for a one-click subscribe link. Each site gets its own folder (`<site>/cal.ics`), so a page for the site can sit next to it as `<site>/index.html` and be served at `/sched-alert-calendars/<site>/`. Keep the URL stable once shared: subscribers keep it in their calendar apps, and Pages cannot redirect them to a new one.
+The calendar is then available at `https://viktor-235.github.io/sched-alert-calendars/stopgame/streams.ics`. Use `webcal://viktor-235.github.io/sched-alert-calendars/stopgame/streams.ics` for a one-click subscribe link. Each site gets its own folder, with the calendar file named after its content (`<site>/<content>.ics`), so a page for the site can sit next to it as `<site>/index.html` and be served at `/sched-alert-calendars/<site>/`. Keep the URL stable once shared: subscribers keep it in their calendar apps, and Pages cannot redirect them to a new one.
 
 ## Development
 The entry point is a scheduler class, e.g., `SgScheduler`.
