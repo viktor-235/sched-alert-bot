@@ -18,12 +18,16 @@ logging:
   level:
     com.github.viktor235.schedalertbot: INFO
     org.javers: WARN
+  # The file gets only warnings and errors; the console keeps the levels above
+  threshold:
+    file: WARN
   file:
     name: logs/sched-alert-bot.log
   logback:
     rollingpolicy:
-      file-name-pattern: logs/sched-alert-bot-%d{yyyy-MM-dd}.%i.log
-      max-history: 7
+      # Weekly files (year-week), kept for about a month
+      file-name-pattern: logs/sched-alert-bot-%d{yyyy-ww}.%i.log
+      max-history: 4
 management:
   endpoints:
     web:
