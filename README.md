@@ -84,4 +84,5 @@ Workflow from task to release, commit and PR conventions: [CONTRIBUTING.md](CONT
 - [x] Add stream cover image
 - [x] Telegram command `/status`
 - [ ] Telegram command to trigger check manually (without waiting for cron)
+- [ ] Decide how to handle status flapping around stream start. The site hides an event for a few minutes at its start time, so it goes SCHEDULED → FINISHED → LIVE (7 times in prod logs 2026-10-18…25). The site can also wrongly mark another stream live, then revert: on 2026-10-24 this caused a false "🔴 В эфире" for event 2470 and a second one for 2501. Ideas: a grace period before FINISHED near the start time; no repeated LIVE if `startedAt` is recent
 - [x] Notify about canceled streams  
