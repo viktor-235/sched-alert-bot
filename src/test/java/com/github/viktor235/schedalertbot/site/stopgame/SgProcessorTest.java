@@ -510,17 +510,19 @@ class SgProcessorTest {
     }
 
     @SuppressWarnings("unchecked")
-    private Object capturedNotification() {
+    private Map<String, Object> capturedModel() {
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(msgBuildingService).buildMsg(eq(SgProcessor.TEMPLATE_NAME), captor.capture());
-        return captor.getValue().get("notification");
+        return captor.getValue();
+    }
+
+    private Object capturedNotification() {
+        return capturedModel().get("notification");
     }
 
     @SuppressWarnings("unchecked")
     private TemplateField capturedField(String name) {
-        ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
-        verify(msgBuildingService).buildMsg(eq(SgProcessor.TEMPLATE_NAME), captor.capture());
-        return ((Map<String, TemplateField>) captor.getValue().get("fields")).get(name);
+        return ((Map<String, TemplateField>) capturedModel().get("fields")).get(name);
     }
 
     private SgProcessor createProcessor(IcsExportProperties icsProps) {

@@ -215,9 +215,10 @@ public class SgProcessor {
     EventSnapshot decide(EventSnapshot event) {
         EventStatus prevStatus = event.db != null ? event.db.getStatus() : null;
         // Diffs against a missing side only describe the appearing or disappearing event, not a field change
-        boolean hasFieldDiffs = event.db != null && event.web != null && !event.fieldDiffs.isEmpty();
+        boolean bothSides = event.db != null && event.web != null;
+        boolean hasFieldDiffs = bothSides && !event.fieldDiffs.isEmpty();
         // Silent diffs are saved to keep the stored values current, but do not notify
-        boolean hasSilentDiffs = event.db != null && event.web != null && !event.silentDiffs.isEmpty();
+        boolean hasSilentDiffs = bothSides && !event.silentDiffs.isEmpty();
         boolean shouldSave = event.db == null || event.newStatus != prevStatus || hasFieldDiffs || hasSilentDiffs;
         NotificationType notification = shouldSave
                 ? NotificationType.of(prevStatus, event.newStatus, hasFieldDiffs)
@@ -226,10 +227,14 @@ public class SgProcessor {
                 event.db != null ? event.db.getId() : event.web.getId(),
                 event.web != null ? event.web.getName() : event.db.getName(),
                 prevStatus, event.newStatus,
-                hasFieldDiffs ? event.fieldDiffs.stream().map(FieldDiff::getName).toList() : List.of(),
-                hasSilentDiffs ? event.silentDiffs.stream().map(FieldDiff::getName).toList() : List.of(),
+                hasFieldDiffs ? diffNames(event.fieldDiffs) : List.of(),
+                hasSilentDiffs ? diffNames(event.silentDiffs) : List.of(),
                 shouldSave, notification);
         return event.withDecision(shouldSave, notification);
+    }
+
+    private static List<String> diffNames(List<FieldDiff> diffs) {
+        return diffs.stream().map(FieldDiff::getName).toList();
     }
 
     private String generateMsg(EventSnapshot event) {

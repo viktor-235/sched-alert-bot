@@ -513,19 +513,19 @@ class SgIntegrationTest extends AbstractIntegrationTest {
                 "An event in the database is on the site and only its participants changed. The database should be updated and an update message with the participants change sent",
                 "src/test/resources/web/stopgame/events/a-b_old_participants-c-seed.json",
                 "src/test/resources/web/stopgame/events/a-b-c.html",
-                "src/test/resources/web/stopgame/events/a-b_old_participants-c-db-expected.json",
+                "src/test/resources/web/stopgame/events/a-b_updated-c-db-expected.json",
                 "src/test/resources/web/stopgame/events/b_old_participants-msg.json"),
         POSTER_URL_QUERY_CHANGED(
                 "An event in the database is on the site and only the query string of its poster URL changed. The database should be updated with the new URL and no message sent",
                 "src/test/resources/web/stopgame/events/a-b_old_poster_query-c-seed.json",
                 "src/test/resources/web/stopgame/events/a-b-c.html",
-                "src/test/resources/web/stopgame/events/a-b_old_poster_query-c-db-expected.json",
+                "src/test/resources/web/stopgame/events/a-b_updated-c-db-expected.json",
                 null),
         POSTER_REPLACED(
                 "An event in the database is on the site and its poster URL has a new path. The database should be updated and an update message with a new poster sent",
                 "src/test/resources/web/stopgame/events/a-b_old_poster-c-seed.json",
                 "src/test/resources/web/stopgame/events/a-b-c.html",
-                "src/test/resources/web/stopgame/events/a-b_old_poster-c-db-expected.json",
+                "src/test/resources/web/stopgame/events/a-b_updated-c-db-expected.json",
                 "src/test/resources/web/stopgame/events/b_old_poster-msg.json"),
         B_FINISHED(
                 "A LIVE event disappears from the site. It should become FINISHED with its date kept and endedAt set, and no message should be sent",

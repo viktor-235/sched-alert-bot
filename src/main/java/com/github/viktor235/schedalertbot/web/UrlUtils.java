@@ -1,5 +1,7 @@
 package com.github.viktor235.schedalertbot.web;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Objects;
 
 public final class UrlUtils {
@@ -16,18 +18,6 @@ public final class UrlUtils {
     }
 
     private static String withoutQuery(String url) {
-        if (url == null) {
-            return null;
-        }
-        int end = url.length();
-        int query = url.indexOf('?');
-        int fragment = url.indexOf('#');
-        if (query >= 0) {
-            end = query;
-        }
-        if (fragment >= 0 && fragment < end) {
-            end = fragment;
-        }
-        return url.substring(0, end);
+        return StringUtils.substringBefore(StringUtils.substringBefore(url, "?"), "#");
     }
 }
