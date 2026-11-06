@@ -14,6 +14,7 @@ public class SchedulerConfig {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(2);
         scheduler.setThreadNamePrefix("ScheduledTask-");
+        scheduler.setErrorHandler(new SchedulerErrorHandler());
         return scheduler;
     }
 }
