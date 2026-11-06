@@ -22,5 +22,5 @@
 
 ## 4. Final check
 
-- [ ] 4.1 No Mermaid diagram update needed: the "if changed" conditions in `event-notifications` keep their wording. Confirm after syncing specs.
+- [x] 4.1 No Mermaid diagram update needed: the "if changed" conditions in `event-notifications` keep their wording. Confirm after syncing specs.
 - [x] 4.2 Run `./gradlew test` and verify the whole suite passes.
