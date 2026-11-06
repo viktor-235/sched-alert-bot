@@ -8,6 +8,7 @@ import com.github.viktor235.schedalertbot.compare.CompareService;
 import com.github.viktor235.schedalertbot.site.stopgame.model.*;
 import com.github.viktor235.schedalertbot.telegram.TelegramService;
 import com.github.viktor235.schedalertbot.telegram.TelegramUser;
+import com.github.viktor235.schedalertbot.template.TemplateField;
 import com.github.viktor235.schedalertbot.template.TemplateService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -293,6 +294,84 @@ class SgProcessorTest {
         verify(tgService, never()).sendPhotoMessage(any(), any(), any());
     }
 
+    // Poster changes
+
+    @Test
+    void process_whenScheduledEventPosterQueryChanged_thenSavedWithoutNotification() {
+        SgEventEntry db = createDbEvent(EventStatus.SCHEDULED);
+        db.setImageUrl("https://example.com/image.jpg?1700000000");
+        givenDb(db);
+        SgEventWeb web = createWebEvent(false);
+        web.setImageUrl("https://example.com/image.jpg?1700003600");
+        givenSite(web);
+
+        processor.process();
+
+        SgEventEntry saved = capturedSave();
+        assertThat(saved.getStatus()).isEqualTo(EventStatus.SCHEDULED);
+        assertThat(saved.getImageUrl()).isEqualTo("https://example.com/image.jpg?1700003600");
+        verify(tgService, never()).sendPhotoMessage(any(), any(), any());
+    }
+
+    @Test
+    void process_whenLiveEventPosterQueryChanged_thenSavedWithoutNotification() {
+        givenDb(createDbEvent(EventStatus.LIVE));
+        SgEventWeb web = createWebEvent(true);
+        web.setImageUrl("https://example.com/image.jpg?1700003600");
+        givenSite(web);
+
+        processor.process();
+
+        SgEventEntry saved = capturedSave();
+        assertThat(saved.getStatus()).isEqualTo(EventStatus.LIVE);
+        assertThat(saved.getImageUrl()).isEqualTo("https://example.com/image.jpg?1700003600");
+        verify(tgService, never()).sendPhotoMessage(any(), any(), any());
+    }
+
+    @Test
+    void process_whenScheduledEventPosterPathChanged_thenSavedAndNotifiedWithNewPoster() {
+        givenDb(createDbEvent(EventStatus.SCHEDULED));
+        SgEventWeb web = createWebEvent(false);
+        web.setImageUrl("https://example.com/new-image.jpg?1700003600");
+        givenSite(web);
+
+        processor.process();
+
+        assertThat(capturedSave().getImageUrl()).isEqualTo("https://example.com/new-image.jpg?1700003600");
+        assertThat(capturedNotification()).isEqualTo(NotificationType.UPDATE.name());
+        assertThat(capturedField(SgEventWeb.Fields.imageUrl).isChanged()).isTrue();
+        verify(tgService).sendPhotoMessage(any(), any(), any());
+    }
+
+    @Test
+    void process_whenPosterQueryAndDateChanged_thenNotifiedWithoutNewPoster() {
+        givenDb(createDbEvent(EventStatus.SCHEDULED));
+        SgEventWeb web = createWebEvent(false);
+        web.setDate(SCHEDULED_DATE.plus(1, ChronoUnit.HOURS));
+        web.setImageUrl("https://example.com/image.jpg?1700003600");
+        givenSite(web);
+
+        processor.process();
+
+        assertThat(capturedNotification()).isEqualTo(NotificationType.UPDATE.name());
+        assertThat(capturedField(SgEventWeb.Fields.date).isChanged()).isTrue();
+        assertThat(capturedField(SgEventWeb.Fields.imageUrl).isChanged()).isFalse();
+    }
+
+    @Test
+    void process_whenPosterAdded_thenSavedAndNotifiedWithUpdate() {
+        SgEventEntry db = createDbEvent(EventStatus.SCHEDULED);
+        db.setImageUrl(null);
+        givenDb(db);
+        givenSite(createWebEvent(false));
+
+        processor.process();
+
+        assertThat(capturedSave().getImageUrl()).isEqualTo("https://example.com/image.jpg");
+        assertThat(capturedNotification()).isEqualTo(NotificationType.UPDATE.name());
+        assertThat(capturedField(SgEventWeb.Fields.imageUrl).isChanged()).isTrue();
+    }
+
     @Test
     void process_whenSaveFails_thenNothingIsSent() {
         givenDb(createDbEvent(EventStatus.SCHEDULED));
@@ -431,10 +510,19 @@ class SgProcessorTest {
     }
 
     @SuppressWarnings("unchecked")
-    private Object capturedNotification() {
+    private Map<String, Object> capturedModel() {
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(msgBuildingService).buildMsg(eq(SgProcessor.TEMPLATE_NAME), captor.capture());
-        return captor.getValue().get("notification");
+        return captor.getValue();
+    }
+
+    private Object capturedNotification() {
+        return capturedModel().get("notification");
+    }
+
+    @SuppressWarnings("unchecked")
+    private TemplateField capturedField(String name) {
+        return ((Map<String, TemplateField>) capturedModel().get("fields")).get(name);
     }
 
     private SgProcessor createProcessor(IcsExportProperties icsProps) {

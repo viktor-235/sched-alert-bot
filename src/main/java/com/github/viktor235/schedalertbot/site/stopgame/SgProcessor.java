@@ -10,6 +10,7 @@ import com.github.viktor235.schedalertbot.telegram.TelegramService;
 import com.github.viktor235.schedalertbot.telegram.TelegramUser;
 import com.github.viktor235.schedalertbot.template.TemplateField;
 import com.github.viktor235.schedalertbot.template.TemplateService;
+import com.github.viktor235.schedalertbot.web.UrlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.SetUtils;
@@ -31,6 +32,11 @@ import java.util.stream.Collectors;
 public class SgProcessor {
 
     public static final String TEMPLATE_NAME = "stopgame-telegram.html.ftl";
+    /**
+     * The site bumps the query string of a poster URL (a cache buster) without changing the image,
+     * so a change of these fields only in the query is saved but not notified
+     */
+    private static final Set<String> QUERY_INSENSITIVE_FIELDS = Set.of(SgEventWeb.Fields.imageUrl);
 
     private final SgScraper pageParser;
     private final SgEventRepository repo;
@@ -160,10 +166,18 @@ public class SgProcessor {
         SgEventWeb db = mapper.toWeb(event.db);
         SgEventWeb web = event.web;
         log.debug("Comparing db and web records:\n{}\n{}", db, web);
-        List<FieldDiff> fieldDiffs = compareService.compare(db, web);
-        EventSnapshot newEvent = event.withDiffReport(fieldDiffs);
+        Map<Boolean, List<FieldDiff>> diffsBySilence = compareService.compare(db, web).stream()
+                .collect(Collectors.partitioningBy(this::isSilent));
+        EventSnapshot newEvent = event.withDiffReport(diffsBySilence.get(false), diffsBySilence.get(true));
         log.debug("Comparison result: {}", newEvent);
         return newEvent;
+    }
+
+    private boolean isSilent(FieldDiff diff) {
+        return QUERY_INSENSITIVE_FIELDS.contains(diff.getName())
+                && diff.getOldValue() instanceof String oldUrl
+                && diff.getNewValue() instanceof String newUrl
+                && UrlUtils.equalsIgnoringQuery(oldUrl, newUrl);
     }
 
     EventSnapshot updateStatus(EventSnapshot event) {
@@ -201,18 +215,26 @@ public class SgProcessor {
     EventSnapshot decide(EventSnapshot event) {
         EventStatus prevStatus = event.db != null ? event.db.getStatus() : null;
         // Diffs against a missing side only describe the appearing or disappearing event, not a field change
-        boolean hasFieldDiffs = event.db != null && event.web != null && !event.fieldDiffs.isEmpty();
-        boolean shouldSave = event.db == null || event.newStatus != prevStatus || hasFieldDiffs;
+        boolean bothSides = event.db != null && event.web != null;
+        boolean hasFieldDiffs = bothSides && !event.fieldDiffs.isEmpty();
+        // Silent diffs are saved to keep the stored values current, but do not notify
+        boolean hasSilentDiffs = bothSides && !event.silentDiffs.isEmpty();
+        boolean shouldSave = event.db == null || event.newStatus != prevStatus || hasFieldDiffs || hasSilentDiffs;
         NotificationType notification = shouldSave
                 ? NotificationType.of(prevStatus, event.newStatus, hasFieldDiffs)
                 : NotificationType.NONE;
-        log.info("Event {} '{}': {} -> {}, changed={}, save={}, notification={}",
+        log.info("Event {} '{}': {} -> {}, changed={}, silent={}, save={}, notification={}",
                 event.db != null ? event.db.getId() : event.web.getId(),
                 event.web != null ? event.web.getName() : event.db.getName(),
                 prevStatus, event.newStatus,
-                hasFieldDiffs ? event.fieldDiffs.stream().map(FieldDiff::getName).toList() : List.of(),
+                hasFieldDiffs ? diffNames(event.fieldDiffs) : List.of(),
+                hasSilentDiffs ? diffNames(event.silentDiffs) : List.of(),
                 shouldSave, notification);
         return event.withDecision(shouldSave, notification);
+    }
+
+    private static List<String> diffNames(List<FieldDiff> diffs) {
+        return diffs.stream().map(FieldDiff::getName).toList();
     }
 
     private String generateMsg(EventSnapshot event) {
@@ -282,27 +304,28 @@ public class SgProcessor {
                                 SgEventWeb web,
                                 EventStatus newStatus,
                                 List<FieldDiff> fieldDiffs,
+                                List<FieldDiff> silentDiffs,
                                 boolean shouldSave,
                                 NotificationType notification) {
 
         public static EventSnapshot init(SgEventEntry db, SgEventWeb web) {
-            return new EventSnapshot(db, web, null, List.of(), false, NotificationType.NONE);
+            return new EventSnapshot(db, web, null, List.of(), List.of(), false, NotificationType.NONE);
         }
 
         public EventSnapshot withWeb(SgEventWeb web) {
-            return new EventSnapshot(db, web, newStatus, fieldDiffs, shouldSave, notification);
+            return new EventSnapshot(db, web, newStatus, fieldDiffs, silentDiffs, shouldSave, notification);
         }
 
-        public EventSnapshot withDiffReport(List<FieldDiff> fieldDiffs) {
-            return new EventSnapshot(db, web, newStatus, fieldDiffs, shouldSave, notification);
+        public EventSnapshot withDiffReport(List<FieldDiff> fieldDiffs, List<FieldDiff> silentDiffs) {
+            return new EventSnapshot(db, web, newStatus, fieldDiffs, silentDiffs, shouldSave, notification);
         }
 
         public EventSnapshot withNewStatus(EventStatus status) {
-            return new EventSnapshot(db, web, status, fieldDiffs, shouldSave, notification);
+            return new EventSnapshot(db, web, status, fieldDiffs, silentDiffs, shouldSave, notification);
         }
 
         public EventSnapshot withDecision(boolean shouldSave, NotificationType notification) {
-            return new EventSnapshot(db, web, newStatus, fieldDiffs, shouldSave, notification);
+            return new EventSnapshot(db, web, newStatus, fieldDiffs, silentDiffs, shouldSave, notification);
         }
     }
 }
