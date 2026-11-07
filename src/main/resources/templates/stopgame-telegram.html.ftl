@@ -54,7 +54,7 @@
     </#if>
     <#assign result = prefix />
     <#if notification == "CANCELED">
-        <#return result + field.oldValue?datetime.iso?string["dd MMMM, HH:mm (z)"] + "\n" />
+        <#return result + field.oldValue?datetime.iso?string["EE, dd MMMM, HH:mm (z)"]?cap_first + "\n" />
     </#if>
     <#if field.changed && !newEvent>
         <#if field.oldValue??>
@@ -68,7 +68,7 @@
         </#if>
     </#if>
     <#if field.newValue??>
-        <#assign result += field.newValue?datetime.iso?string["dd MMMM, HH:mm (z)"] />
+        <#assign result += field.newValue?datetime.iso?string["EE, dd MMMM, HH:mm (z)"]?cap_first />
     </#if>
     <#return result + "\n" />
 </#function>

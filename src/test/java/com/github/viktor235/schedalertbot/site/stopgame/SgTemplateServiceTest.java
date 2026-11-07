@@ -42,7 +42,7 @@ class SgTemplateServiceTest {
         assertThat(result).isEqualTo("""
                 🆙 Обновление события
                 🎦 Old name → New name
-                📅 01 января, 03:00 → 02 января, 03:00 (MSK)
+                📅 01 января, 03:00 → Пт, 02 января, 03:00 (MSK)
                 🧑‍🧒‍🧒 Streamer 1 → Streamer 1, Streamer 2
                 ℹ️ ... → New description
                 🖼️ Новый постер
@@ -68,7 +68,7 @@ class SgTemplateServiceTest {
         assertThat(result).isEqualTo("""
                 🆕 Новое событие
                 🎦 Name
-                📅 01 января, 03:00 (MSK)
+                📅 Чт, 01 января, 03:00 (MSK)
                 """);
     }
 
@@ -117,7 +117,7 @@ class SgTemplateServiceTest {
         assertThat(result).isEqualTo("""
                 🆕 Новое событие
                 🎦 Name
-                📅 01 января, 03:00 (MSK)
+                📅 Чт, 01 января, 03:00 (MSK)
                 ℹ️ Description
                 """);
     }
@@ -164,7 +164,7 @@ class SgTemplateServiceTest {
         assertThat(result).isEqualTo("""
                 ❌ Отмена события
                 🎦 Name
-                📅 01 января, 03:00 (MSK)
+                📅 Чт, 01 января, 03:00 (MSK)
                 ℹ️ Description
                 """);
     }
@@ -188,7 +188,7 @@ class SgTemplateServiceTest {
         assertThat(result).isEqualTo("""
                 🔁 Снова в расписании
                 🎦 Name
-                📅 01 января, 03:00 (MSK)
+                📅 Чт, 01 января, 03:00 (MSK)
                 🧑‍🧒‍🧒 Streamer 1
                 ℹ️ Description
                 """);
@@ -213,7 +213,7 @@ class SgTemplateServiceTest {
         assertThat(result).isEqualTo("""
                 🔁 Снова в расписании
                 🎦 Name
-                📅 01 января, 03:00 → 02 января, 03:00 (MSK)
+                📅 01 января, 03:00 → Пт, 02 января, 03:00 (MSK)
                 """);
     }
 
