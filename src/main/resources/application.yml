@@ -9,6 +9,7 @@ spring:
 mongock:
   migration-scan-package: com.github.viktor235.schedalertbot.migration
   enabled: true
+  transaction-enabled: false
 telegram:
   bot:
     # Optional: without a token the bot is disabled, events are still processed and exported
