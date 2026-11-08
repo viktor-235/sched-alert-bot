@@ -11,4 +11,5 @@ ${participants?join(", ")}
 </#if>
 Twitch: https://www.twitch.tv/stopgameru
 YouTube: https://www.youtube.com/@StopgameRuOnline/live
+Веб-календарь: https://viktor-235.github.io/sched-alert-calendars/stopgame/
 StopGame: https://stopgame.ru/live_schedule

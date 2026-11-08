@@ -175,7 +175,7 @@ Each entry's `SUMMARY` SHALL be the event name, its `URL` SHALL be the site's co
 - **THEN** its entry has the name as `SUMMARY`, `URL:https://www.twitch.tv/stopgameru`, an `IMAGE` with the image URL, and a `DESCRIPTION` with the description, the participants and the stream links
 
 ### Requirement: Entry description
-Each entry's `DESCRIPTION` SHALL be plain text with the event description, the participants and the site's stream links, one `<name>: <url>` line per link, as blocks separated by a blank line. An empty block SHALL be omitted. For stopgame the links SHALL be Twitch (`https://www.twitch.tv/stopgameru`), YouTube (`https://www.youtube.com/@StopgameRuOnline/live`) and StopGame (`https://stopgame.ru/live_schedule`), in this order.
+Each entry's `DESCRIPTION` SHALL be plain text with the event description, the participants and the site's stream links, one `<name>: <url>` line per link, as blocks separated by a blank line. An empty block SHALL be omitted. For stopgame the links SHALL be Twitch (`https://www.twitch.tv/stopgameru`), YouTube (`https://www.youtube.com/@StopgameRuOnline/live`), Веб-календарь (`https://viktor-235.github.io/sched-alert-calendars/stopgame/`) and StopGame (`https://stopgame.ru/live_schedule`), in this order.
 
 #### Scenario: Event without participants
 - **WHEN** an event has a description and no participants
